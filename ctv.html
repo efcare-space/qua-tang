@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trang CTV — Quà để chia sẻ</title>
+<meta name="theme-color" content="#0f4c81">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --mau: #0f4c81; --chu: #1b2430; --phu: #5b6675; --nen: #f5f7fa; --vien: #d8dee6; --loi: #b42318; --dat: #067647; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--chu);
+         background: var(--nen); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  main { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 1.4rem; line-height: 1.4; margin: 8px 0 4px; padding-top: .1em; }
+  .phu { color: var(--phu); font-size: .95rem; }
+  .the { background: #fff; border: 1px solid var(--vien); border-radius: 14px; padding: 18px; margin-top: 16px; }
+  label { display: block; font-weight: 600; margin: 12px 0 6px; }
+  input { width: 100%; min-height: 48px; padding: 10px 12px; font: inherit; border: 1px solid var(--vien); border-radius: 10px; }
+  button { width: 100%; min-height: 52px; margin-top: 16px; font: inherit; font-weight: 700; color: #fff; background: var(--mau);
+           border: 0; border-radius: 12px; cursor: pointer; }
+  button:disabled { opacity: .6; }
+  button.phu-nut { background: #fff; color: var(--mau); border: 1px solid var(--mau); min-height: 44px; margin-top: 8px; }
+  .bao { margin-top: 12px; font-size: .95rem; } .bao.loi { color: var(--loi); } .bao.dat { color: var(--dat); }
+  [hidden] { display: none !important; }
+  .qua { margin-top: 16px; border: 1px solid var(--vien); border-radius: 14px; overflow: hidden; background: #fff; }
+  .qua .banner { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: linear-gradient(135deg,#0f4c81,#1b7a5c); }
+  .qua .banner-chu { width: 100%; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg,#0f4c81,#1b7a5c); color: #fff; font-weight: 700; font-size: 1.1rem; text-align: center; padding: 16px; }
+  .qua .noi-dung { padding: 14px; }
+  .qua h3 { margin: 0 0 10px; font-size: 1.05rem; }
+  .qua .hang-nut { display: flex; gap: 8px; }
+  .qua .hang-nut button { margin-top: 0; min-height: 46px; font-size: .92rem; }
+  #ten-ctv { font-weight: 700; color: var(--mau); }
+</style>
+</head>
+<body>
+<main>
+  <section id="khung-dang-nhap">
+    <h1>Trang CTV — Quà để chia sẻ</h1>
+    <p class="phu">Đăng nhập bằng số điện thoại để nhận link chia sẻ gắn mã của riêng bạn</p>
+    <div class="the">
+      <form id="form-xin-ma" novalidate>
+        <label for="sdt">Số điện thoại</label>
+        <input type="tel" id="sdt" autocomplete="tel" inputmode="tel" placeholder="09xx xxx xxx" required>
+        <button type="submit" id="nut-xin-ma">Gửi mã xác thực</button>
+        <p class="bao" id="bao-xin-ma" role="status" aria-live="polite"></p>
+      </form>
+      <form id="form-xac-minh" hidden novalidate>
+        <label for="ma">Mã xác thực (6 số)</label>
+        <input type="text" id="ma" inputmode="numeric" maxlength="6" placeholder="------" required>
+        <button type="submit" id="nut-xac-minh">Xác nhận</button>
+        <p class="bao" id="bao-xac-minh" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <section id="khung-qua" hidden>
+    <h1>Quà hôm nay</h1>
+    <p class="phu">Mã của bạn: <span id="ten-ctv"></span> — mỗi lần chia sẻ, link đã gắn sẵn mã này</p>
+    <div id="danh-sach-qua"></div>
+    <p class="bao" id="bao-qua" role="status"></p>
+  </section>
+</main>
+
+<script type="module">
+const CUNG_GOC = location.hostname.endsWith('.workers.dev') || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const API_GOC = CUNG_GOC ? '' : 'https://ctv-platform-lead-identity.efcare.workers.dev';
+const GOC_TRANG = location.origin + location.pathname.replace(/ctv\.html$/, '');
+const $ = id => document.getElementById(id);
+const KHO_PHIEN = 'ctv_session_token';
+
+function bao(id, chu, loai = '') { const p = $(id); p.textContent = chu; p.className = 'bao ' + loai; }
+const LOI = { SAI_DANH_TINH: 'Số điện thoại chưa đúng.', MA_HET_HAN: 'Mã đã hết hạn, bấm gửi lại.',
+  SAI_MA: 'Mã chưa đúng, thử lại.', QUA_SO_LAN_THU: 'Thử sai quá nhiều lần, xin mã mới.', CHUA_CAU_HINH: 'Hệ thống đang tạm dừng.' };
+
+let soDienThoaiDangXacMinh = '';
+
+$('form-xin-ma').addEventListener('submit', async e => {
+  e.preventDefault();
+  const phone = $('sdt').value.trim();
+  if (!phone) return bao('bao-xin-ma', 'Vui lòng nhập số điện thoại.', 'loi');
+  $('nut-xin-ma').disabled = true; bao('bao-xin-ma', 'Đang gửi…');
+  try {
+    const r = await fetch(API_GOC + '/api/v1/ctv/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+    const d = await r.json();
+    if (!d.ok) { bao('bao-xin-ma', LOI[d.ma] || 'Không gửi được mã.', 'loi'); $('nut-xin-ma').disabled = false; return; }
+    soDienThoaiDangXacMinh = phone;
+    $('form-xin-ma').hidden = true; $('form-xac-minh').hidden = false;
+    bao('bao-xac-minh', 'Đã gửi mã tới ' + d.phone_masked + '. Chưa nhận được thì hỏi admin.', '');
+  } catch (_) { bao('bao-xin-ma', 'Mất mạng, thử lại.', 'loi'); $('nut-xin-ma').disabled = false; }
+});
+
+$('form-xac-minh').addEventListener('submit', async e => {
+  e.preventDefault();
+  const code = $('ma').value.trim();
+  if (!/^\d{6}$/.test(code)) return bao('bao-xac-minh', 'Mã gồm đúng 6 số.', 'loi');
+  $('nut-xac-minh').disabled = true; bao('bao-xac-minh', 'Đang xác minh…');
+  try {
+    const r = await fetch(API_GOC + '/api/v1/ctv/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: soDienThoaiDangXacMinh, code }) });
+    const d = await r.json();
+    if (!d.ok) { bao('bao-xac-minh', LOI[d.ma] || 'Xác minh không thành công.', 'loi'); $('nut-xac-minh').disabled = false; return; }
+    localStorage.setItem(KHO_PHIEN, d.session_token);
+    await moTrangQua();
+  } catch (_) { bao('bao-xac-minh', 'Mất mạng, thử lại.', 'loi'); $('nut-xac-minh').disabled = false; }
+});
+
+async function moTrangQua() {
+  const token = localStorage.getItem(KHO_PHIEN);
+  if (!token) return;
+  const r = await fetch(API_GOC + '/api/v1/ctv/hooks', { headers: { Authorization: 'Bearer ' + token } });
+  if (r.status === 401) { localStorage.removeItem(KHO_PHIEN); return; }
+  const d = await r.json();
+  if (!d.ok) return;
+  $('khung-dang-nhap').hidden = true; $('khung-qua').hidden = false;
+  $('ten-ctv').textContent = d.referrer_code;
+  const ds = $('danh-sach-qua'); ds.textContent = '';
+  if (!d.hooks.length) { ds.innerHTML = '<p class="phu">Chưa có quà nào. Hỏi admin thêm quà mới.</p>'; return; }
+  for (const h of d.hooks) ds.appendChild(theCard(h, d.referrer_code));
+}
+
+function theCard(h, referrerCode) {
+  const linkChiaSe = GOC_TRANG + '?ref=' + encodeURIComponent(referrerCode) + '&hook=' + encodeURIComponent(h.id);
+  const div = document.createElement('div'); div.className = 'qua';
+  const banner = document.createElement(h.banner_image_url ? 'img' : 'div');
+  if (h.banner_image_url) { banner.className = 'banner'; banner.src = h.banner_image_url; banner.alt = h.title; banner.loading = 'lazy'; }
+  else { banner.className = 'banner-chu'; banner.textContent = h.title; }
+  div.appendChild(banner);
+  const noiDung = document.createElement('div'); noiDung.className = 'noi-dung';
+  const tieuDe = document.createElement('h3'); tieuDe.textContent = h.title; noiDung.appendChild(tieuDe);
+  const hangNut = document.createElement('div'); hangNut.className = 'hang-nut';
+
+  const nutChiaSe = document.createElement('button'); nutChiaSe.textContent = 'Chia sẻ';
+  nutChiaSe.onclick = async () => {
+    try {
+      if (navigator.share) await navigator.share({ title: h.title, url: linkChiaSe });
+      else throw new Error('khong-co-web-share');
+    } catch (_) {
+      await navigator.clipboard.writeText(linkChiaSe);
+      bao('bao-qua', 'Đã sao chép link — dán vào Zalo/Facebook để chia sẻ.', 'dat');
+    }
+  };
+  const nutSaoChep = document.createElement('button'); nutSaoChep.className = 'phu-nut'; nutSaoChep.textContent = 'Sao chép link';
+  nutSaoChep.onclick = () => navigator.clipboard.writeText(linkChiaSe).then(() => bao('bao-qua', 'Đã sao chép link.', 'dat'));
+
+  hangNut.append(nutChiaSe, nutSaoChep); noiDung.appendChild(hangNut); div.appendChild(noiDung);
+  return div;
+}
+
+moTrangQua();
+</script>
+</body>
+</html>

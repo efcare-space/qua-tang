@@ -19,6 +19,8 @@
   .bang-cuon { overflow-x: auto; max-width: 100%; }   /* bảng rộng hơn màn hình 390px thì cuộn ngang, không tràn ra ngoài */
   .thong-ke { display: flex; gap: 24px; flex-wrap: wrap; margin: 10px 0; }
   .thong-ke table { min-width: 260px; }
+  .anh-nho { height: 36px; width: 64px; object-fit: cover; border-radius: 4px; vertical-align: middle; }
+  .tam-thoi { background: #fff7e6; border: 1px solid #f0c674; border-radius: 8px; padding: 10px 12px; font-size: .88rem; margin: 10px 0; }
 </style>
 </head>
 <body>
@@ -56,6 +58,26 @@
     <button id="pii-xem">Xem</button>
   </div>
   <p id="pii-ket-qua"></p>
+
+  <h2>Quản lý Quà (hiện trên trang CTV)</h2>
+  <p class="phu">Dán link món quà (ảnh, video, trang bất kỳ) — hệ thống tự dò ảnh/tiêu đề làm banner cho trang CTV.</p>
+  <form class="hang" id="form-them-qua" novalidate>
+    <input type="text" id="qua-tieu-de" placeholder="Tên quà (vd: Video hạ đường huyết)" style="min-width:220px" required>
+    <input type="url" id="qua-link" placeholder="https://… link món quà" style="min-width:320px" required>
+    <button type="submit" id="qua-nut-them">Thêm quà</button>
+  </form>
+  <p id="qua-bao" role="status"></p>
+  <div class="bang-cuon">
+  <table><thead><tr><th>Banner</th><th>Tên</th><th>Link</th><th>Trạng thái</th><th>Ngày</th><th></th></tr></thead><tbody id="ds-qua"></tbody></table>
+  </div>
+
+  <h2>Tra mã xác thực CTV (tạm thời — chưa nối SMS/Zalo thật)</h2>
+  <div class="tam-thoi">Chưa có nhà cung cấp SMS/ZNS thật. CTV xin mã trên trang CTV xong, admin tra mã ở đây rồi báo tay (gọi điện/nhắn Zalo). Khi nối nhà cung cấp thật, mục này không cần dùng nữa.</div>
+  <div class="hang">
+    <input type="tel" id="otp-sdt" placeholder="Số điện thoại CTV">
+    <button id="otp-tra">Tra mã</button>
+  </div>
+  <p id="otp-ket-qua"></p>
 </main>
 <script>
 // Trang tĩnh này nằm trên GitHub Pages (efcare-space.github.io/qua-tang/); API + D1 vẫn chạy trên
@@ -127,6 +149,58 @@ $('pii-xem').onclick = async () => {
   const d = await r.json();
   if (!d.ok) { $('pii-ket-qua').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + '</span>'; return; }
   $('pii-ket-qua').textContent = d.identities.map(i => i.identity_type + ': ' + i.identity_value + ' (' + i.status + ')').join(' · ');
+};
+
+async function taiDanhSachQua() {
+  const k = $('khoa').value.trim(); if (!k) return;
+  const r = await fetch(API_GOC + '/api/v1/admin/hooks', { headers: { Authorization: 'Bearer ' + k } });
+  if (!r.ok) return;
+  const d = await r.json(); if (!d.ok) return;
+  const tb = $('ds-qua'); tb.textContent = '';
+  for (const h of d.rows) {
+    const tr = document.createElement('tr');
+    const tdAnh = document.createElement('td');
+    if (h.banner_image_url) { const img = document.createElement('img'); img.className = 'anh-nho'; img.src = h.banner_image_url; img.alt = ''; tdAnh.appendChild(img); }
+    else tdAnh.textContent = '(chữ)';
+    tr.appendChild(tdAnh);
+    [h.title, h.resource_url, h.status, new Date(h.created_at).toLocaleString('vi-VN')]
+      .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+    const tdNut = document.createElement('td');
+    if (h.status === 'ACTIVE') {
+      const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'lưu kho';
+      btn.onclick = async () => {
+        await fetch(API_GOC + '/api/v1/admin/hooks/' + encodeURIComponent(h.id) + '/archive', { method: 'POST', headers: { Authorization: 'Bearer ' + k } });
+        taiDanhSachQua();
+      };
+      tdNut.appendChild(btn);
+    }
+    tr.appendChild(tdNut); tb.appendChild(tr);
+  }
+}
+$('form-them-qua').addEventListener('submit', async e => {
+  e.preventDefault();
+  const k = $('khoa').value.trim(); if (!k) return ($('qua-bao').innerHTML = '<span class="loi">Nhập khoá quản trị.</span>');
+  const title = $('qua-tieu-de').value.trim(); const resource_url = $('qua-link').value.trim();
+  if (!title || !resource_url) return ($('qua-bao').innerHTML = '<span class="loi">Cần tên và link.</span>');
+  $('qua-nut-them').disabled = true; $('qua-bao').textContent = 'Đang thêm, đang dò banner…';
+  const r = await fetch(API_GOC + '/api/v1/admin/hooks', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + k }, body: JSON.stringify({ title, resource_url }) });
+  const d = await r.json();
+  $('qua-nut-them').disabled = false;
+  if (!d.ok) { $('qua-bao').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + '</span>'; return; }
+  $('qua-bao').textContent = d.banner_tu_dong ? 'Đã thêm, tự dò được banner.' : 'Đã thêm, không dò được ảnh — trang CTV sẽ tự vẽ banner chữ.';
+  $('qua-tieu-de').value = ''; $('qua-link').value = '';
+  taiDanhSachQua();
+});
+$('tai').addEventListener('click', taiDanhSachQua);
+
+$('otp-tra').onclick = async () => {
+  const k = $('khoa').value.trim(); const phone = $('otp-sdt').value.trim();
+  if (!k) return ($('otp-ket-qua').innerHTML = '<span class="loi">Nhập khoá quản trị.</span>');
+  if (!phone) return ($('otp-ket-qua').innerHTML = '<span class="loi">Nhập số điện thoại.</span>');
+  const r = await fetch(API_GOC + '/api/v1/admin/otp/latest?phone=' + encodeURIComponent(phone), { headers: { Authorization: 'Bearer ' + k } });
+  const d = await r.json();
+  if (!d.ok) { $('otp-ket-qua').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + ' (chưa xin mã, hoặc mã đã hết hạn)</span>'; return; }
+  $('otp-ket-qua').textContent = d.phone_masked + ': mã ' + d.code + ' (hết hạn ' + new Date(d.expires_at).toLocaleTimeString('vi-VN') + ')';
 };
 </script>
 </body>

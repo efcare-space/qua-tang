@@ -28,12 +28,20 @@
   button:disabled { opacity: .6; }
   .bao { margin-top: 12px; font-size: .95rem; } .bao.loi { color: var(--loi); } .bao.dat { color: var(--dat); }
   [hidden] { display: none !important; }
+  .the-qua { border: 1px solid var(--vien); border-radius: 14px; overflow: hidden; margin-top: 18px; background: #fff; }
+  .the-qua .banner { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+  .the-qua .banner-chu { width: 100%; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg,#0f4c81,#1b7a5c); color: #fff; font-weight: 700; font-size: 1.1rem; text-align: center; padding: 16px; }
+  .the-qua .noi-dung { padding: 14px; } .the-qua h2 { margin: 0 0 8px; font-size: 1.1rem; }
+  .the-qua a.mo-qua { display: inline-block; color: var(--mau); font-weight: 600; }
 </style>
 </head>
 <body>
 <main>
   <h1>Nền tảng CTV — Lead & Identity</h1>
   <p class="phu">Một người một mã, một nguồn giới thiệu rõ ràng</p>
+
+  <section id="khung-qua" hidden></section>
 
   <section class="the" id="khung-form">
     <form id="form" novalidate>
@@ -71,6 +79,25 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catc
 // Attribution lấy từ đường dẫn landing page do CTV chia sẻ (Module C/G): ?ref=<referrer_code>&cmp=<campaign_id>&hook=<hook_id>
 const qs = new URLSearchParams(location.search);
 const attribution = { referrer_code: qs.get('ref') || null, campaign_id: qs.get('cmp') || null, hook_id: qs.get('hook') || null };
+
+// Có ?hook= trong link CTV chia sẻ: hiện đúng món quà trước khi hỏi SĐT, để link có nội dung thật, không phải form trống.
+if (attribution.hook_id) {
+  fetch(API_GOC + '/api/v1/hooks/' + encodeURIComponent(attribution.hook_id)).then(r => r.json()).then(d => {
+    if (!d.ok) return;
+    const h = d.hook;
+    const khung = $('khung-qua'); khung.hidden = false;
+    const the = document.createElement('div'); the.className = 'the-qua';
+    const banner = document.createElement(h.banner_image_url ? 'img' : 'div');
+    if (h.banner_image_url) { banner.className = 'banner'; banner.src = h.banner_image_url; banner.alt = h.title; }
+    else { banner.className = 'banner-chu'; banner.textContent = h.title; }
+    the.appendChild(banner);
+    const noiDung = document.createElement('div'); noiDung.className = 'noi-dung';
+    const tieuDe = document.createElement('h2'); tieuDe.textContent = h.title; noiDung.appendChild(tieuDe);
+    const mo = document.createElement('a'); mo.className = 'mo-qua'; mo.href = h.resource_url; mo.target = '_blank'; mo.rel = 'noopener';
+    mo.textContent = 'Xem quà →'; noiDung.appendChild(mo);
+    the.appendChild(noiDung); khung.appendChild(the);
+  }).catch(() => {});
+}
 
 function bao(chu, loai = '') { const p = $('bao'); p.textContent = chu; p.className = 'bao ' + loai; }
 const LOI = { SAI_DANH_TINH: 'Số điện thoại chưa đúng.', CHUA_DONG_Y: 'Vui lòng tick đồng ý để tiếp tục.',
