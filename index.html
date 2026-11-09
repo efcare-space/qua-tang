@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nền tảng CTV — Lead & Identity</title>
+<meta name="theme-color" content="#0f4c81">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --mau: #0f4c81; --chu: #1b2430; --phu: #5b6675; --nen: #f5f7fa; --vien: #d8dee6; --loi: #b42318; --dat: #067647; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--chu);
+         background: var(--nen); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  main { max-width: 440px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 1.5rem; line-height: 1.4; margin: 8px 0 4px; padding-top: .1em; }
+  .phu { color: var(--phu); font-size: .95rem; }
+  .the { background: #fff; border: 1px solid var(--vien); border-radius: 14px; padding: 18px; margin-top: 18px; }
+  label { display: block; font-weight: 600; margin: 12px 0 6px; }
+  input[type=tel] { width: 100%; min-height: 48px; padding: 10px 12px; font: inherit; border: 1px solid var(--vien); border-radius: 10px; }
+  .dong-y { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; font-size: .92rem; }
+  .dong-y input { width: 22px; height: 22px; margin-top: 2px; flex: none; }
+  button { width: 100%; min-height: 52px; margin-top: 16px; font: inherit; font-weight: 700; color: #fff; background: var(--mau);
+           border: 0; border-radius: 12px; cursor: pointer; }
+  button:disabled { opacity: .6; }
+  .bao { margin-top: 12px; font-size: .95rem; } .bao.loi { color: var(--loi); } .bao.dat { color: var(--dat); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Nền tảng CTV — Lead & Identity</h1>
+  <p class="phu">Một người một mã, một nguồn giới thiệu rõ ràng</p>
+
+  <section class="the" id="khung-form">
+    <form id="form" novalidate>
+      <label for="sdt">Số điện thoại</label>
+      <input type="tel" id="sdt" autocomplete="tel" inputmode="tel" placeholder="09xx xxx xxx" required>
+      <!-- Lời đồng ý: đã Pháp chế rà 09/11/2026. Đổi chữ thì phải tăng CONSENT_VER và báo Hữu Bật tăng cùng bên worker. -->
+      <div class="dong-y">
+        <input type="checkbox" id="dong-y">
+        <label for="dong-y" style="margin:0;font-weight:400">Tôi đồng ý cho Nền tảng CTV lưu số điện thoại để liên hệ về nội dung này. Chỉ người quản trị xem được số điện thoại đầy đủ, có ghi lý do mỗi lần xem. Tôi có thể yêu cầu xoá bất kỳ lúc nào.</label>
+      </div>
+      <button type="submit" id="nut">Gửi thông tin</button>
+      <p class="bao" id="bao" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section class="the" id="khung-xong" hidden>
+    <p class="bao dat">Đã nhận thông tin. Cảm ơn bạn — sẽ có người liên hệ sớm.</p>
+  </section>
+</main>
+
+<script type="module">
+import { taoOutbox, khoIndexedDB } from './outbox.js';
+
+// Trang tĩnh này nằm trên GitHub Pages (efcare-space.github.io/qua-tang/); API + D1 vẫn chạy trên
+// Cloudflare Worker riêng — gọi API tuyệt đối qua tên miền khác (CORS theo ALLOWED_ORIGIN phía worker).
+const API_GOC = 'https://ctv-platform-lead-identity.efcare.workers.dev';
+const PHIEN_BAN_DONG_Y = 'v1';
+const PROGRAM_CODE = 'EFCARE';   // program_code đầu tiên, theo quyết định 09/11/2026
+const $ = id => document.getElementById(id);
+const ob = taoOutbox({ store: khoIndexedDB() });
+let henGio = null;
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// Attribution lấy từ đường dẫn landing page do CTV chia sẻ (Module C/G): ?ref=<referrer_code>&cmp=<campaign_id>&hook=<hook_id>
+const qs = new URLSearchParams(location.search);
+const attribution = { referrer_code: qs.get('ref') || null, campaign_id: qs.get('cmp') || null, hook_id: qs.get('hook') || null };
+
+function bao(chu, loai = '') { const p = $('bao'); p.textContent = chu; p.className = 'bao ' + loai; }
+const LOI = { SAI_DANH_TINH: 'Số điện thoại chưa đúng.', CHUA_DONG_Y: 'Vui lòng tick đồng ý để tiếp tục.',
+  CHUA_CAU_HINH: 'Hệ thống đang tạm dừng nhận thông tin. Vui lòng quay lại sau.',
+  DANH_TINH_DA_THU_HOI: 'Số điện thoại này đã yêu cầu ngừng liên hệ trước đó.' };
+
+async function gui() {
+  clearTimeout(henGio);
+  const kq = await ob.xa();
+  for (const x of kq.xong) if (x.data && x.data.ok) { $('khung-form').hidden = true; $('khung-xong').hidden = false; }
+  if (kq.loi.length) {
+    const ma = kq.loi[0].item.ma;
+    bao(LOI[ma] || 'Không gửi được thông tin. Vui lòng kiểm tra lại và gửi lại.', 'loi');
+    for (const x of kq.loi) await ob.bo(x.item.client_tx_id);   // để khách sửa và gửi lại
+    $('nut').disabled = false;
+  }
+  if (kq.hen_luc) {
+    bao('Mạng đang chập chờn. Thông tin đã được giữ trên máy, sẽ tự gửi lại.', '');
+    henGio = setTimeout(gui, Math.max(1000, kq.hen_luc - Date.now()));
+  }
+}
+
+$('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const phone = $('sdt').value.trim();
+  if (!phone) return bao('Vui lòng nhập số điện thoại.', 'loi');
+  if (!$('dong-y').checked) return bao(LOI.CHUA_DONG_Y, 'loi');
+  $('nut').disabled = true; bao('Đang gửi…');
+  // Ghi vào máy TRƯỚC khi gửi: mất mạng giữa chừng cũng không mất, gửi lại không tạo lead trùng.
+  await ob.them(API_GOC + '/api/v1/leads', {
+    client_tx_id: crypto.randomUUID(), program_code: PROGRAM_CODE,
+    identity: { type: 'PHONE', value: phone }, consent: true, consent_ver: PHIEN_BAN_DONG_Y, attribution
+  });
+  await gui();
+});
+
+window.addEventListener('online', gui);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') gui(); });
+gui();   // mở lại trang: gửi nốt những gì còn trong máy
+</script>
+</body>
+</html>

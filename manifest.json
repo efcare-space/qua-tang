@@ -1,0 +1,12 @@
+{
+  "name": "Nền tảng CTV — Lead & Identity",
+  "short_name": "Nền",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f4c81",
+  "lang": "vi",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

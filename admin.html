@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Quản trị · Nền tảng CTV — Lead & Identity</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; font-family: 'Be Vietnam Pro', system-ui, sans-serif; color: #1b2430; background: #f5f7fa; line-height: 1.5; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  .hang { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+  input, select, button { font: inherit; min-height: 44px; padding: 6px 10px; border: 1px solid #d8dee6; border-radius: 8px; }
+  button { background: #0f4c81; color: #fff; border: 0; font-weight: 600; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; background: #fff; font-size: .9rem; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eef1f5; white-space: nowrap; }
+  .loi { color: #b42318; }
+  .lk { color: #0f4c81; cursor: pointer; text-decoration: underline; background: none; border: 0; min-height: auto; padding: 0; font: inherit; }
+  .bang-cuon { overflow-x: auto; max-width: 100%; }   /* bảng rộng hơn màn hình 390px thì cuộn ngang, không tràn ra ngoài */
+  .thong-ke { display: flex; gap: 24px; flex-wrap: wrap; margin: 10px 0; }
+  .thong-ke table { min-width: 260px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Quản trị Lead</h1>
+  <div class="hang">
+    <input type="password" id="khoa" placeholder="Khoá quản trị" autocomplete="off">
+    <select id="chuong-trinh"><option value="">Mọi chương trình</option><option>EFCARE</option></select>
+    <select id="loc"><option value="">Mọi trạng thái</option><option>NEW</option><option>CONTACTABLE</option><option>QUALIFIED</option><option>NURTURING</option><option>CONVERTED</option><option>DISQUALIFIED</option><option>WITHDRAWN</option></select>
+    <button id="tai">Tải</button><button id="them" disabled>Tải thêm</button><button id="tsv" disabled>Sao chép TSV</button>
+  </div>
+  <p id="bao" role="status"></p>
+
+  <h2>Dashboard nguồn lead</h2>
+  <div class="thong-ke">
+    <div>
+      <p class="phu" style="margin:0 0 4px">Theo nguồn (attribution_source)</p>
+      <div class="bang-cuon"><table id="bang-theo-nguon"><thead><tr><th>Nguồn</th><th>Số lead</th><th>Đã chuyển đổi</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div>
+      <p class="phu" style="margin:0 0 4px">Theo người giới thiệu (top 50)</p>
+      <div class="bang-cuon"><table id="bang-theo-gioi-thieu"><thead><tr><th>Mã CTV</th><th>Số lead</th><th>Đã chuyển đổi</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <h2>Danh sách Lead</h2>
+  <div class="bang-cuon">
+  <table><thead><tr><th>Ngày</th><th>Lead</th><th>Chương trình</th><th>Trạng thái</th><th>SĐT (che)</th><th>Nguồn</th><th>Người giới thiệu</th><th>Chiến dịch</th><th>Hook</th><th></th></tr></thead><tbody id="ds"></tbody></table>
+  </div>
+
+  <h2>Xem số điện thoại đầy đủ (bắt buộc lý do, luôn ghi lại nhật ký)</h2>
+  <div class="hang">
+    <input type="text" id="pii-lead" placeholder="Mã Lead (led_…)">
+    <input type="text" id="pii-ly-do" placeholder="Lý do xem (bắt buộc)" style="min-width:260px">
+    <button id="pii-xem">Xem</button>
+  </div>
+  <p id="pii-ket-qua"></p>
+</main>
+<script>
+// Trang tĩnh này nằm trên GitHub Pages (efcare-space.github.io/qua-tang/); API + D1 vẫn chạy trên
+// Cloudflare Worker riêng — gọi API tuyệt đối qua tên miền khác (CORS theo ALLOWED_ORIGIN phía worker).
+const API_GOC = 'https://ctv-platform-lead-identity.efcare.workers.dev';
+const $ = id => document.getElementById(id);
+let rows = [], next = null;
+$('khoa').value = sessionStorage.getItem('qt') || '';      // chỉ giữ trong phiên trình duyệt, đóng tab là mất
+
+async function tai(tiep) {
+  const k = $('khoa').value.trim(); if (!k) return ($('bao').textContent = 'Nhập khoá quản trị.');
+  sessionStorage.setItem('qt', k);
+  if (!tiep) { rows = []; next = null; $('ds').textContent = ''; }
+  const q = new URLSearchParams({ limit: '50' });
+  if ($('chuong-trinh').value) q.set('program_code', $('chuong-trinh').value);
+  if ($('loc').value) q.set('status', $('loc').value);
+  if (tiep && next) q.set('cursor', next);
+  const r = await fetch(API_GOC + '/api/v1/admin/leads?' + q, { headers: { Authorization: 'Bearer ' + k } });
+  if (r.status === 401) { $('bao').innerHTML = '<span class="loi">Sai khoá quản trị.</span>'; return; }
+  const d = await r.json();
+  if (!d.ok) { $('bao').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + '</span>'; return; }
+  for (const x of d.rows) {
+    rows.push(x);
+    const tr = document.createElement('tr');
+    [new Date(x.created_at).toLocaleString('vi-VN'), x.id, x.program_code, x.status, x.identity_masked, x.attribution_source,
+      x.referrer_code || '', x.campaign_id || '', x.hook_id || '']
+      .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });   // textContent: chống chèn mã
+    const tdXem = document.createElement('td');
+    const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'xem PII →';
+    btn.onclick = () => { $('pii-lead').value = x.id; };
+    tdXem.appendChild(btn); tr.appendChild(tdXem);
+    $('ds').appendChild(tr);
+  }
+  next = d.next_cursor; $('them').disabled = !next; $('tsv').disabled = rows.length === 0;
+  $('bao').textContent = rows.length + ' lead' + (next ? ' (còn nữa)' : '');
+}
+const o = v => { let s = String(v ?? '').replace(/[\t\r\n]+/g, ' '); return /^[=+\-@]/.test(s) ? "'" + s : s; };
+$('tsv').onclick = () => navigator.clipboard.writeText(
+  ['Ngày\tLead\tChương trình\tTrạng thái\tSĐT (che)\tNguồn\tNgười giới thiệu\tChiến dịch\tHook'].concat(rows.map(x =>
+    [new Date(x.created_at).toISOString(), x.id, x.program_code, x.status, x.identity_masked, x.attribution_source, x.referrer_code || '', x.campaign_id || '', x.hook_id || ''].map(o).join('\t'))).join('\n')
+).then(() => $('bao').textContent = 'Đã sao chép ' + rows.length + ' dòng. Dán vào ô A1 của Google Sheet.');
+$('tai').onclick = () => tai(false); $('them').onclick = () => tai(true);
+
+async function taiThongKe() {
+  const k = $('khoa').value.trim(); if (!k) return;
+  const q = new URLSearchParams(); if ($('chuong-trinh').value) q.set('program_code', $('chuong-trinh').value);
+  const r = await fetch(API_GOC + '/api/v1/admin/leads/by-source?' + q, { headers: { Authorization: 'Bearer ' + k } });
+  if (!r.ok) return;
+  const d = await r.json(); if (!d.ok) return;
+  const dien = (id, ds, cot) => {
+    const tb = document.querySelector('#' + id + ' tbody'); tb.textContent = '';
+    for (const x of ds) {
+      const tr = document.createElement('tr');
+      [x[cot], x.so_luong, x.da_chuyen_doi].forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+      tb.appendChild(tr);
+    }
+  };
+  dien('bang-theo-nguon', d.theo_nguon, 'attribution_source');
+  dien('bang-theo-gioi-thieu', d.theo_nguoi_gioi_thieu, 'referrer_code');
+}
+$('tai').addEventListener('click', taiThongKe);
+
+$('pii-xem').onclick = async () => {
+  const k = $('khoa').value.trim(); const leadId = $('pii-lead').value.trim(); const lyDo = $('pii-ly-do').value.trim();
+  if (!k) return ($('pii-ket-qua').innerHTML = '<span class="loi">Nhập khoá quản trị.</span>');
+  if (!leadId || !lyDo) return ($('pii-ket-qua').innerHTML = '<span class="loi">Cần mã Lead và lý do.</span>');
+  const r = await fetch(API_GOC + '/api/v1/admin/leads/' + encodeURIComponent(leadId) + '/pii?reason=' + encodeURIComponent(lyDo),
+    { headers: { Authorization: 'Bearer ' + k } });
+  const d = await r.json();
+  if (!d.ok) { $('pii-ket-qua').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + '</span>'; return; }
+  $('pii-ket-qua').textContent = d.identities.map(i => i.identity_type + ': ' + i.identity_value + ' (' + i.status + ')').join(' · ');
+};
+</script>
+</body>
+</html>
