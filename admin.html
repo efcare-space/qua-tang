@@ -20,7 +20,6 @@
   .thong-ke { display: flex; gap: 24px; flex-wrap: wrap; margin: 10px 0; }
   .thong-ke table { min-width: 260px; }
   .anh-nho { height: 36px; width: 64px; object-fit: cover; border-radius: 4px; vertical-align: middle; }
-  .tam-thoi { background: #fff7e6; border: 1px solid #f0c674; border-radius: 8px; padding: 10px 12px; font-size: .88rem; margin: 10px 0; }
 </style>
 </head>
 <body>
@@ -71,13 +70,6 @@
   <table><thead><tr><th>Banner</th><th>Tên</th><th>Link</th><th>Trạng thái</th><th>Ngày</th><th></th></tr></thead><tbody id="ds-qua"></tbody></table>
   </div>
 
-  <h2>Tra mã xác thực CTV (tạm thời — chưa nối SMS/Zalo thật)</h2>
-  <div class="tam-thoi">Chưa có nhà cung cấp SMS/ZNS thật. CTV xin mã trên trang CTV xong, admin tra mã ở đây rồi báo tay (gọi điện/nhắn Zalo). Khi nối nhà cung cấp thật, mục này không cần dùng nữa.</div>
-  <div class="hang">
-    <input type="tel" id="otp-sdt" placeholder="Số điện thoại CTV">
-    <button id="otp-tra">Tra mã</button>
-  </div>
-  <p id="otp-ket-qua"></p>
 </main>
 <script>
 // Trang tĩnh này nằm trên GitHub Pages (efcare-space.github.io/qua-tang/); API + D1 vẫn chạy trên
@@ -192,16 +184,6 @@ $('form-them-qua').addEventListener('submit', async e => {
   taiDanhSachQua();
 });
 $('tai').addEventListener('click', taiDanhSachQua);
-
-$('otp-tra').onclick = async () => {
-  const k = $('khoa').value.trim(); const phone = $('otp-sdt').value.trim();
-  if (!k) return ($('otp-ket-qua').innerHTML = '<span class="loi">Nhập khoá quản trị.</span>');
-  if (!phone) return ($('otp-ket-qua').innerHTML = '<span class="loi">Nhập số điện thoại.</span>');
-  const r = await fetch(API_GOC + '/api/v1/admin/otp/latest?phone=' + encodeURIComponent(phone), { headers: { Authorization: 'Bearer ' + k } });
-  const d = await r.json();
-  if (!d.ok) { $('otp-ket-qua').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + ' (chưa xin mã, hoặc mã đã hết hạn)</span>'; return; }
-  $('otp-ket-qua').textContent = d.phone_masked + ': mã ' + d.code + ' (hết hạn ' + new Date(d.expires_at).toLocaleTimeString('vi-VN') + ')';
-};
 </script>
 </body>
 </html>

@@ -23,6 +23,7 @@
            border: 0; border-radius: 12px; cursor: pointer; }
   button:disabled { opacity: .6; }
   button.phu-nut { background: #fff; color: var(--mau); border: 1px solid var(--mau); min-height: 44px; margin-top: 8px; }
+  .hang-2nut { display: flex; gap: 8px; margin-top: 16px; } .hang-2nut button { margin-top: 0; }
   .bao { margin-top: 12px; font-size: .95rem; } .bao.loi { color: var(--loi); } .bao.dat { color: var(--dat); }
   [hidden] { display: none !important; }
   .qua { margin-top: 16px; border: 1px solid var(--vien); border-radius: 14px; overflow: hidden; background: #fff; }
@@ -40,19 +41,18 @@
 <main>
   <section id="khung-dang-nhap">
     <h1>Trang CTV — Quà để chia sẻ</h1>
-    <p class="phu">Đăng nhập bằng số điện thoại để nhận link chia sẻ gắn mã của riêng bạn</p>
+    <p class="phu">Lần đầu: nhập SĐT và tự đặt mã PIN để đăng ký. Lần sau: nhập lại đúng SĐT + PIN để đăng nhập.</p>
     <div class="the">
-      <form id="form-xin-ma" novalidate>
+      <form id="form-dang-nhap" novalidate>
         <label for="sdt">Số điện thoại</label>
         <input type="tel" id="sdt" autocomplete="tel" inputmode="tel" placeholder="09xx xxx xxx" required>
-        <button type="submit" id="nut-xin-ma">Gửi mã xác thực</button>
-        <p class="bao" id="bao-xin-ma" role="status" aria-live="polite"></p>
-      </form>
-      <form id="form-xac-minh" hidden novalidate>
-        <label for="ma">Mã xác thực (6 số)</label>
-        <input type="text" id="ma" inputmode="numeric" maxlength="6" placeholder="------" required>
-        <button type="submit" id="nut-xac-minh">Xác nhận</button>
-        <p class="bao" id="bao-xac-minh" role="status" aria-live="polite"></p>
+        <label for="pin">Mã PIN (4-6 số, tự đặt)</label>
+        <input type="password" id="pin" inputmode="numeric" maxlength="6" placeholder="••••••" required>
+        <div class="hang-2nut">
+          <button type="submit" id="nut-dang-ky">Đăng ký (lần đầu)</button>
+          <button type="button" id="nut-dang-nhap" class="phu-nut">Đăng nhập (đã có)</button>
+        </div>
+        <p class="bao" id="bao-dang-nhap" role="status" aria-live="polite"></p>
       </form>
     </div>
   </section>
@@ -73,39 +73,32 @@ const $ = id => document.getElementById(id);
 const KHO_PHIEN = 'ctv_session_token';
 
 function bao(id, chu, loai = '') { const p = $(id); p.textContent = chu; p.className = 'bao ' + loai; }
-const LOI = { SAI_DANH_TINH: 'Số điện thoại chưa đúng.', MA_HET_HAN: 'Mã đã hết hạn, bấm gửi lại.',
-  SAI_MA: 'Mã chưa đúng, thử lại.', QUA_SO_LAN_THU: 'Thử sai quá nhiều lần, xin mã mới.', CHUA_CAU_HINH: 'Hệ thống đang tạm dừng.' };
+const LOI = { SAI_DANH_TINH: 'Số điện thoại chưa đúng.', SAI_PIN: 'Mã PIN phải gồm 4-6 chữ số.',
+  DA_DANG_KY: 'SĐT này đã đăng ký — bấm "Đăng nhập" thay vì đăng ký.', CHUA_DANG_KY: 'SĐT này chưa đăng ký — bấm "Đăng ký" trước.',
+  TAM_KHOA: 'Sai PIN quá nhiều lần, tài khoản tạm khoá 15 phút.', CHUA_CAU_HINH: 'Hệ thống đang tạm dừng.', THU_LAI: 'Vui lòng thử lại.' };
 
-let soDienThoaiDangXacMinh = '';
+function layThongTin() {
+  const phone = $('sdt').value.trim(); const pin = $('pin').value.trim();
+  if (!phone) { bao('bao-dang-nhap', 'Vui lòng nhập số điện thoại.', 'loi'); return null; }
+  if (!/^\d{4,6}$/.test(pin)) { bao('bao-dang-nhap', LOI.SAI_PIN, 'loi'); return null; }
+  return { phone, pin };
+}
 
-$('form-xin-ma').addEventListener('submit', async e => {
-  e.preventDefault();
-  const phone = $('sdt').value.trim();
-  if (!phone) return bao('bao-xin-ma', 'Vui lòng nhập số điện thoại.', 'loi');
-  $('nut-xin-ma').disabled = true; bao('bao-xin-ma', 'Đang gửi…');
+async function guiDangNhap(duong, nutId) {
+  const tt = layThongTin(); if (!tt) return;
+  $(nutId).disabled = true; bao('bao-dang-nhap', 'Đang xử lý…');
   try {
-    const r = await fetch(API_GOC + '/api/v1/ctv/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+    const r = await fetch(API_GOC + duong, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(tt) });
     const d = await r.json();
-    if (!d.ok) { bao('bao-xin-ma', LOI[d.ma] || 'Không gửi được mã.', 'loi'); $('nut-xin-ma').disabled = false; return; }
-    soDienThoaiDangXacMinh = phone;
-    $('form-xin-ma').hidden = true; $('form-xac-minh').hidden = false;
-    bao('bao-xac-minh', 'Đã gửi mã tới ' + d.phone_masked + '. Chưa nhận được thì hỏi admin.', '');
-  } catch (_) { bao('bao-xin-ma', 'Mất mạng, thử lại.', 'loi'); $('nut-xin-ma').disabled = false; }
-});
-
-$('form-xac-minh').addEventListener('submit', async e => {
-  e.preventDefault();
-  const code = $('ma').value.trim();
-  if (!/^\d{6}$/.test(code)) return bao('bao-xac-minh', 'Mã gồm đúng 6 số.', 'loi');
-  $('nut-xac-minh').disabled = true; bao('bao-xac-minh', 'Đang xác minh…');
-  try {
-    const r = await fetch(API_GOC + '/api/v1/ctv/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: soDienThoaiDangXacMinh, code }) });
-    const d = await r.json();
-    if (!d.ok) { bao('bao-xac-minh', LOI[d.ma] || 'Xác minh không thành công.', 'loi'); $('nut-xac-minh').disabled = false; return; }
+    $(nutId).disabled = false;
+    if (!d.ok) { bao('bao-dang-nhap', LOI[d.ma] || 'Không thành công.', 'loi'); return; }
     localStorage.setItem(KHO_PHIEN, d.session_token);
     await moTrangQua();
-  } catch (_) { bao('bao-xac-minh', 'Mất mạng, thử lại.', 'loi'); $('nut-xac-minh').disabled = false; }
-});
+  } catch (_) { bao('bao-dang-nhap', 'Mất mạng, thử lại.', 'loi'); $(nutId).disabled = false; }
+}
+
+$('form-dang-nhap').addEventListener('submit', e => { e.preventDefault(); guiDangNhap('/api/v1/ctv/auth/register', 'nut-dang-ky'); });
+$('nut-dang-nhap').addEventListener('click', () => guiDangNhap('/api/v1/ctv/auth/login', 'nut-dang-nhap'));
 
 async function moTrangQua() {
   const token = localStorage.getItem(KHO_PHIEN);
