@@ -70,6 +70,12 @@
   <table><thead><tr><th>Banner</th><th>Tên</th><th>Link</th><th>Trạng thái</th><th>Ngày</th><th></th></tr></thead><tbody id="ds-qua"></tbody></table>
   </div>
 
+  <h2>Quản lý CTV (lộ trình 4 bậc)</h2>
+  <p class="phu">Nâng bậc sau khi CTV hoàn thành đào tạo ngoài nền tảng này — không tự động.</p>
+  <div class="bang-cuon">
+  <table><thead><tr><th>Mã CTV</th><th>SĐT (che)</th><th>Bậc</th><th>Số khách</th><th>Tham gia</th><th>Nâng/hạ bậc</th></tr></thead><tbody id="ds-ctv"></tbody></table>
+  </div>
+
 </main>
 <script>
 // Trang tĩnh này nằm trên GitHub Pages (efcare-space.github.io/qua-tang/); API + D1 vẫn chạy trên
@@ -184,6 +190,31 @@ $('form-them-qua').addEventListener('submit', async e => {
   taiDanhSachQua();
 });
 $('tai').addEventListener('click', taiDanhSachQua);
+
+const TEN_BAC = { 0: 'Bán ngay', 1: 'Xây kênh', 2: 'Tạo app/Skill', 3: 'Truyền nhân' };
+async function taiDanhSachCtv() {
+  const k = $('khoa').value.trim(); if (!k) return;
+  const r = await fetch(API_GOC + '/api/v1/admin/ctv', { headers: { Authorization: 'Bearer ' + k } });
+  if (!r.ok) return;
+  const d = await r.json(); if (!d.ok) return;
+  const tb = $('ds-ctv'); tb.textContent = '';
+  for (const c of d.rows) {
+    const tr = document.createElement('tr');
+    [c.referrer_code, c.identity_masked, TEN_BAC[c.tier] + ' (' + c.tier + ')', c.so_lead, new Date(c.created_at).toLocaleDateString('vi-VN')]
+      .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+    const tdNut = document.createElement('td');
+    const chon = document.createElement('select'); chon.style.minHeight = '36px';
+    for (let i = 0; i <= 3; i++) { const o = document.createElement('option'); o.value = i; o.textContent = i + ' - ' + TEN_BAC[i]; if (i === c.tier) o.selected = true; chon.appendChild(o); }
+    const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'Lưu'; btn.style.marginLeft = '8px';
+    btn.onclick = async () => {
+      await fetch(API_GOC + '/api/v1/admin/ctv/' + encodeURIComponent(c.referrer_code) + '/tier', { method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + k }, body: JSON.stringify({ tier: Number(chon.value) }) });
+      taiDanhSachCtv();
+    };
+    tdNut.append(chon, btn); tr.appendChild(tdNut); tb.appendChild(tr);
+  }
+}
+$('tai').addEventListener('click', taiDanhSachCtv);
 </script>
 </body>
 </html>
