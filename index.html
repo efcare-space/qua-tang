@@ -3,42 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nền tảng CTV — Lead & Identity</title>
-<meta name="theme-color" content="#0f4c81">
+<title>EFCLoyalty</title>
+<meta name="theme-color" content="#163963">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { --mau: #0f4c81; --chu: #1b2430; --phu: #5b6675; --nen: #f5f7fa; --vien: #d8dee6; --loi: #b42318; --dat: #067647; }
+  :root {
+    --mau: #163963; --mau-toi: #0F2A4A; --vang: #C0A866; --vang-nhat: #F7F1CF;
+    --chu: #14243A; --phu: #5B6B80; --nen: #FBF9F3; --the-nen: #fff; --vien: #E7E0CB;
+    --loi: #A2452E; --loi-nen: #FCEDE8; --dat: #1E7B4F; --dat-nen: #E3F3EA;
+  }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--chu);
          background: var(--nen); line-height: 1.55; -webkit-font-smoothing: antialiased; }
   main { max-width: 440px; margin: 0 auto; padding: 20px 16px 40px; }
-  h1 { font-size: 1.5rem; line-height: 1.4; margin: 8px 0 4px; padding-top: .1em; }
+  .dau-trang { display: flex; align-items: center; gap: 10px; padding-top: 4px; }
+  .dau-trang img { width: 40px; height: 40px; border-radius: 10px; }
+  h1 { font-size: 1.4rem; line-height: 1.3; margin: 0; }
   .phu { color: var(--phu); font-size: .95rem; }
-  .the { background: #fff; border: 1px solid var(--vien); border-radius: 14px; padding: 18px; margin-top: 18px; }
+  .the { background: var(--the-nen); border: 1px solid var(--vien); border-radius: 14px; padding: 18px; margin-top: 18px; }
   label { display: block; font-weight: 600; margin: 12px 0 6px; }
   input[type=tel] { width: 100%; min-height: 48px; padding: 10px 12px; font: inherit; border: 1px solid var(--vien); border-radius: 10px; }
+  input[type=tel]:focus { outline: 2px solid var(--vang); outline-offset: 1px; border-color: var(--mau); }
   .dong-y { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; font-size: .92rem; }
-  .dong-y input { width: 22px; height: 22px; margin-top: 2px; flex: none; }
+  .dong-y input { width: 22px; height: 22px; margin-top: 2px; flex: none; accent-color: var(--mau); }
   button { width: 100%; min-height: 52px; margin-top: 16px; font: inherit; font-weight: 700; color: #fff; background: var(--mau);
-           border: 0; border-radius: 12px; cursor: pointer; }
-  button:disabled { opacity: .6; }
+           border: 0; border-radius: 12px; cursor: pointer; transition: background .15s; }
+  button:hover { background: var(--mau-toi); } button:disabled { opacity: .6; }
   .bao { margin-top: 12px; font-size: .95rem; } .bao.loi { color: var(--loi); } .bao.dat { color: var(--dat); }
   [hidden] { display: none !important; }
-  .the-qua { border: 1px solid var(--vien); border-radius: 14px; overflow: hidden; margin-top: 18px; background: #fff; }
+  .the-qua { border: 1px solid var(--vien); border-radius: 14px; overflow: hidden; margin-top: 18px; background: var(--the-nen); }
   .the-qua .banner { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
   .the-qua .banner-chu { width: 100%; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg,#0f4c81,#1b7a5c); color: #fff; font-weight: 700; font-size: 1.1rem; text-align: center; padding: 16px; }
+    background: linear-gradient(135deg, var(--mau), var(--mau-toi) 65%, var(--vang)); color: #fff; font-weight: 700;
+    font-size: 1.1rem; text-align: center; padding: 16px; }
   .the-qua .noi-dung { padding: 14px; } .the-qua h2 { margin: 0 0 8px; font-size: 1.1rem; }
-  .the-qua a.mo-qua { display: inline-block; color: var(--mau); font-weight: 600; }
+  .the-qua a.mo-qua { display: inline-block; color: var(--mau); font-weight: 700; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Nền tảng CTV — Lead & Identity</h1>
+  <div class="dau-trang"><img src="icon-192.png" alt="EFCLoyalty"><h1>EFCLoyalty</h1></div>
   <p class="phu">Một người một mã, một nguồn giới thiệu rõ ràng</p>
 
   <section id="khung-qua" hidden></section>
@@ -47,10 +56,10 @@
     <form id="form" novalidate>
       <label for="sdt">Số điện thoại</label>
       <input type="tel" id="sdt" autocomplete="tel" inputmode="tel" placeholder="09xx xxx xxx" required>
-      <!-- Lời đồng ý: đã Pháp chế rà 09/11/2026. Đổi chữ thì phải tăng CONSENT_VER và báo Hữu Bật tăng cùng bên worker. -->
+      <!-- Lời đồng ý: NHÁP, cần Ong Thợ Pháp chế rà trước khi ra mắt. Đổi chữ thì phải tăng CONSENT_VER. -->
       <div class="dong-y">
         <input type="checkbox" id="dong-y">
-        <label for="dong-y" style="margin:0;font-weight:400">Tôi đồng ý cho Nền tảng CTV lưu số điện thoại để liên hệ về nội dung này. Chỉ người quản trị xem được số điện thoại đầy đủ, có ghi lý do mỗi lần xem. Tôi có thể yêu cầu xoá bất kỳ lúc nào.</label>
+        <label for="dong-y" style="margin:0;font-weight:400">Tôi đồng ý cho EFCLoyalty lưu số điện thoại để liên hệ về nội dung này. Chỉ người quản trị xem được số điện thoại đầy đủ, có ghi lý do mỗi lần xem. Tôi có thể yêu cầu xoá bất kỳ lúc nào.</label>
       </div>
       <button type="submit" id="nut">Gửi thông tin</button>
       <p class="bao" id="bao" role="status" aria-live="polite"></p>
@@ -65,10 +74,8 @@
 <script type="module">
 import { taoOutbox, khoIndexedDB } from './outbox.js';
 
-// Trang tĩnh này nằm trên GitHub Pages (efcare-space.github.io/qua-tang/); API + D1 vẫn chạy trên
-// Cloudflare Worker riêng — gọi API tuyệt đối qua tên miền khác (CORS theo ALLOWED_ORIGIN phía worker).
 const API_GOC = 'https://ctv-platform-lead-identity.efcare.workers.dev';
-const PHIEN_BAN_DONG_Y = 'v1';
+const PHIEN_BAN_DONG_Y = 'v2'; // v2: đổi tên thương hiệu sang EFCLoyalty trong lời đồng ý (10/11/2026)
 const PROGRAM_CODE = 'EFCARE';   // program_code đầu tiên, theo quyết định 09/11/2026
 const $ = id => document.getElementById(id);
 const ob = taoOutbox({ store: khoIndexedDB() });

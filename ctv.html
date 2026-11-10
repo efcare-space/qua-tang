@@ -3,13 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Trang CTV</title>
-<meta name="theme-color" content="#0f4c81">
+<title>EFCLoyalty</title>
+<meta name="theme-color" content="#163963">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { --mau: #0f4c81; --chu: #1b2430; --phu: #5b6675; --nen: #f5f7fa; --vien: #d8dee6; --loi: #b42318; --dat: #067647; }
+  :root {
+    --mau: #163963; --mau-toi: #0F2A4A; --vang: #C0A866; --vang-nhat: #F7F1CF;
+    --chu: #14243A; --phu: #5B6B80; --nen: #FBF9F3; --the-nen: #fff; --vien: #E7E0CB;
+    --loi: #A2452E; --loi-nen: #FCEDE8; --dat: #1E7B4F; --dat-nen: #E3F3EA;
+  }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   body { font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--chu);
@@ -18,50 +23,57 @@
   h1 { font-size: 1.4rem; line-height: 1.4; margin: 8px 0 4px; padding-top: .1em; }
   h2 { font-size: 1.1rem; margin: 0 0 10px; }
   .phu { color: var(--phu); font-size: .95rem; }
-  .the { background: #fff; border: 1px solid var(--vien); border-radius: 14px; padding: 18px; margin-top: 16px; }
+  .the { background: var(--the-nen); border: 1px solid var(--vien); border-radius: 14px; padding: 18px; margin-top: 16px; }
   label { display: block; font-weight: 600; margin: 12px 0 6px; }
   input { width: 100%; min-height: 48px; padding: 10px 12px; font: inherit; border: 1px solid var(--vien); border-radius: 10px; }
+  input:focus { outline: 2px solid var(--vang); outline-offset: 1px; border-color: var(--mau); }
   button { width: 100%; min-height: 52px; margin-top: 16px; font: inherit; font-weight: 700; color: #fff; background: var(--mau);
-           border: 0; border-radius: 12px; cursor: pointer; }
-  button:disabled { opacity: .6; }
-  button.phu-nut { background: #fff; color: var(--mau); border: 1px solid var(--mau); min-height: 44px; margin-top: 8px; }
+           border: 0; border-radius: 12px; cursor: pointer; transition: background .15s; }
+  button:hover { background: var(--mau-toi); } button:disabled { opacity: .6; }
+  button.phu-nut { background: var(--the-nen); color: var(--mau); border: 1px solid var(--mau); min-height: 44px; margin-top: 8px; }
+  button.phu-nut:hover { background: var(--vang-nhat); }
   .hang-2nut { display: flex; gap: 8px; margin-top: 16px; } .hang-2nut button { margin-top: 0; }
   .bao { margin-top: 12px; font-size: .95rem; } .bao.loi { color: var(--loi); } .bao.dat { color: var(--dat); }
   [hidden] { display: none !important; }
 
+  /* Đầu trang app + logo */
+  .dau-app { display: flex; align-items: center; gap: 10px; }
+  .dau-app img { width: 36px; height: 36px; border-radius: 9px; }
+
   /* Thanh menu dưới, kiểu app FaCare Life */
-  .thanh-duoi { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--vien);
+  .thanh-duoi { position: fixed; left: 0; right: 0; bottom: 0; background: var(--the-nen); border-top: 1px solid var(--vien);
     display: flex; max-width: 480px; margin: 0 auto; padding-bottom: env(safe-area-inset-bottom); }
   .thanh-duoi button { flex: 1; width: auto; min-height: 60px; margin: 0; background: none; color: var(--phu);
     border: 0; border-radius: 0; font-size: .72rem; font-weight: 600; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 2px; cursor: pointer; }
   .thanh-duoi button .icon { font-size: 1.25rem; line-height: 1; }
-  .thanh-duoi button.dang-chon { color: var(--mau); }
+  .thanh-duoi button.dang-chon { color: var(--mau); border-top: 2px solid var(--vang); margin-top: -1px; }
   .top { display: flex; align-items: center; justify-content: space-between; }
   .huy-hieu { background: var(--mau); color: #fff; border-radius: 999px; padding: 2px 10px; font-size: .85rem; font-weight: 700; }
 
   /* Quà */
-  .qua { margin-top: 16px; border: 1px solid var(--vien); border-radius: 14px; overflow: hidden; background: #fff; }
-  .qua .banner { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: linear-gradient(135deg,#0f4c81,#1b7a5c); }
+  .qua { margin-top: 16px; border: 1px solid var(--vien); border-radius: 14px; overflow: hidden; background: var(--the-nen); }
+  .qua .banner { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: linear-gradient(135deg, var(--mau), var(--mau-toi) 65%, var(--vang)); }
   .qua .banner-chu { width: 100%; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg,#0f4c81,#1b7a5c); color: #fff; font-weight: 700; font-size: 1.1rem; text-align: center; padding: 16px; }
+    background: linear-gradient(135deg, var(--mau), var(--mau-toi) 65%, var(--vang)); color: #fff; font-weight: 700;
+    font-size: 1.1rem; text-align: center; padding: 16px; }
   .qua .noi-dung { padding: 14px; } .qua h3 { margin: 0 0 10px; font-size: 1.05rem; }
   .qua .hang-nut { display: flex; gap: 8px; } .qua .hang-nut button { margin-top: 0; min-height: 46px; font-size: .92rem; }
 
   /* Khách của tôi */
   .dem-trang-thai { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
-  .dem-trang-thai .o { background: #fff; border: 1px solid var(--vien); border-radius: 10px; padding: 8px 12px; font-size: .85rem; text-align: center; min-width: 76px; }
+  .dem-trang-thai .o { background: var(--the-nen); border: 1px solid var(--vien); border-radius: 10px; padding: 8px 12px; font-size: .85rem; text-align: center; min-width: 76px; }
   .dem-trang-thai .o b { display: block; font-size: 1.2rem; color: var(--mau); }
-  .khach { background: #fff; border: 1px solid var(--vien); border-radius: 12px; padding: 12px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .khach { background: var(--the-nen); border: 1px solid var(--vien); border-radius: 12px; padding: 12px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .khach .tt { font-size: .9rem; } .khach .tt .sdt { font-weight: 700; } .khach .tt .ngay { color: var(--phu); font-size: .8rem; }
-  .trang-thai-nhan { font-size: .72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: #eef1f5; }
-  .trang-thai-nhan.CONVERTED { background: #d9f2e6; color: var(--dat); }
-  .trang-thai-nhan.WITHDRAWN, .trang-thai-nhan.DISQUALIFIED { background: #fbe4e1; color: var(--loi); }
+  .trang-thai-nhan { font-size: .72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--vang-nhat); color: #6B5A32; }
+  .trang-thai-nhan.CONVERTED { background: var(--dat-nen); color: var(--dat); }
+  .trang-thai-nhan.WITHDRAWN, .trang-thai-nhan.DISQUALIFIED { background: var(--loi-nen); color: var(--loi); }
   .nut-nho { width: auto; min-height: 38px; margin: 0; padding: 0 12px; font-size: .82rem; }
 
   /* Lộ trình */
-  .bac { background: #fff; border: 1px solid var(--vien); border-radius: 14px; padding: 16px; margin-top: 12px; position: relative; }
-  .bac.hien-tai { border-color: var(--mau); border-width: 2px; }
+  .bac { background: var(--the-nen); border: 1px solid var(--vien); border-radius: 14px; padding: 16px; margin-top: 12px; position: relative; }
+  .bac.hien-tai { border-color: var(--vang); border-width: 2px; background: linear-gradient(180deg, var(--vang-nhat), var(--the-nen) 40%); }
   .bac .so { display: inline-flex; width: 28px; height: 28px; border-radius: 999px; background: var(--nen); color: var(--phu);
     align-items: center; justify-content: center; font-weight: 700; margin-right: 8px; }
   .bac.hien-tai .so { background: var(--mau); color: #fff; }
@@ -69,14 +81,14 @@
   .bac .nhan-hien-tai { float: right; font-size: .72rem; font-weight: 700; color: var(--mau); }
 
   /* Hồ sơ */
-  .dong-tt { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eef1f5; font-size: .92rem; }
+  .dong-tt { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--vien); font-size: .92rem; }
   .dong-tt span:first-child { color: var(--phu); }
 </style>
 </head>
 <body>
 <main>
   <section id="khung-dang-nhap">
-    <h1>Trang CTV</h1>
+    <div class="dau-app"><img src="icon-192.png" alt="EFCLoyalty"><h1>EFCLoyalty</h1></div>
     <p class="phu">Lần đầu: nhập SĐT và tự đặt mã PIN để đăng ký. Lần sau: nhập lại đúng SĐT + PIN để đăng nhập.</p>
     <div class="the">
       <form id="form-dang-nhap" novalidate>

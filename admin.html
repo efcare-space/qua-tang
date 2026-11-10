@@ -4,18 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Quản trị · Nền tảng CTV — Lead & Identity</title>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Quản trị · EFCLoyalty</title>
+<link rel="icon" href="icon-192.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  body { margin: 0; font-family: 'Be Vietnam Pro', system-ui, sans-serif; color: #1b2430; background: #f5f7fa; line-height: 1.5; }
+  :root {
+    --mau: #163963; --mau-toi: #0F2A4A; --vang: #C0A866; --vang-nhat: #F7F1CF;
+    --chu: #14243A; --phu: #5B6B80; --nen: #FBF9F3; --the-nen: #fff; --vien: #E7E0CB;
+    --loi: #A2452E; --loi-nen: #FCEDE8; --dat: #1E7B4F; --dat-nen: #E3F3EA;
+  }
+  body { margin: 0; font-family: 'Be Vietnam Pro', system-ui, sans-serif; color: var(--chu); background: var(--nen); line-height: 1.5; }
   main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  .dau-app { display: flex; align-items: center; gap: 10px; }
+  .dau-app img { width: 32px; height: 32px; border-radius: 8px; }
+  h1 { font-size: 1.3rem; margin: 0; }
+  h2 { color: var(--mau); border-bottom: 2px solid var(--vang-nhat); padding-bottom: 6px; margin-top: 28px; }
   .hang { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
-  input, select, button { font: inherit; min-height: 44px; padding: 6px 10px; border: 1px solid #d8dee6; border-radius: 8px; }
-  button { background: #0f4c81; color: #fff; border: 0; font-weight: 600; cursor: pointer; }
-  table { width: 100%; border-collapse: collapse; background: #fff; font-size: .9rem; }
-  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eef1f5; white-space: nowrap; }
-  .loi { color: #b42318; }
-  .lk { color: #0f4c81; cursor: pointer; text-decoration: underline; background: none; border: 0; min-height: auto; padding: 0; font: inherit; }
+  input, select, button { font: inherit; min-height: 44px; padding: 6px 10px; border: 1px solid var(--vien); border-radius: 8px; }
+  button { background: var(--mau); color: #fff; border: 0; font-weight: 600; cursor: pointer; }
+  button:hover { background: var(--mau-toi); }
+  table { width: 100%; border-collapse: collapse; background: var(--the-nen); font-size: .9rem; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--vien); white-space: nowrap; }
+  th { background: var(--vang-nhat); color: var(--mau-toi); font-weight: 700; }
+  .loi { color: var(--loi); }
+  .lk { color: var(--mau); cursor: pointer; text-decoration: underline; background: none; border: 0; min-height: auto; padding: 0; font: inherit; }
   .bang-cuon { overflow-x: auto; max-width: 100%; }   /* bảng rộng hơn màn hình 390px thì cuộn ngang, không tràn ra ngoài */
   .thong-ke { display: flex; gap: 24px; flex-wrap: wrap; margin: 10px 0; }
   .thong-ke table { min-width: 260px; }
@@ -24,7 +36,7 @@
 </head>
 <body>
 <main>
-  <h1>Quản trị Lead</h1>
+  <div class="dau-app"><img src="icon-192.png" alt="EFCLoyalty"><h1>Quản trị · EFCLoyalty</h1></div>
   <div class="hang">
     <input type="password" id="khoa" placeholder="Khoá quản trị" autocomplete="off">
     <select id="chuong-trinh"><option value="">Mọi chương trình</option><option>EFCARE</option></select>
@@ -78,8 +90,6 @@
 
 </main>
 <script>
-// Trang tĩnh này nằm trên GitHub Pages (efcare-space.github.io/qua-tang/); API + D1 vẫn chạy trên
-// Cloudflare Worker riêng — gọi API tuyệt đối qua tên miền khác (CORS theo ALLOWED_ORIGIN phía worker).
 const API_GOC = 'https://ctv-platform-lead-identity.efcare.workers.dev';
 const $ = id => document.getElementById(id);
 let rows = [], next = null;

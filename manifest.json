@@ -1,12 +1,14 @@
 {
-  "name": "Nền tảng CTV — Lead & Identity",
-  "short_name": "Nền",
+  "name": "EFCLoyalty",
+  "short_name": "EFCLoyalty",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0f4c81",
+  "background_color": "#FBF9F3",
+  "theme_color": "#163963",
   "lang": "vi",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
