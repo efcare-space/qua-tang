@@ -39,12 +39,19 @@
   <div class="dau-app"><img src="icon-192.png" alt="EFCLoyalty"><h1>Quản trị · EFCLoyalty</h1></div>
   <div class="hang">
     <input type="password" id="khoa" placeholder="Khoá quản trị" autocomplete="off">
+    <button type="button" id="nut-dn-efid" class="lk" style="border:1px solid var(--vien); padding:6px 10px; border-radius:8px;">hoặc đăng nhập bằng EF-ID →</button>
     <input type="text" id="actor" placeholder="Tên của bạn (ghi vào nhật ký)" autocomplete="off" style="min-width:200px">
     <select id="chuong-trinh"><option value="">Mọi chương trình</option><option>EFCARE</option></select>
     <select id="loc"><option value="">Mọi trạng thái</option><option>NEW</option><option>CONTACTABLE</option><option>QUALIFIED</option><option>NURTURING</option><option>CONVERTED</option><option>DISQUALIFIED</option><option>WITHDRAWN</option></select>
     <button id="tai">Tải</button><button id="them" disabled>Tải thêm</button><button id="tsv" disabled>Sao chép TSV</button>
   </div>
   <p id="bao" role="status"></p>
+  <div class="hang" id="khung-dn-efid" hidden>
+    <input type="text" id="efid-dinh-danh" placeholder="SĐT hoặc EFC-xxxxxx" style="min-width:160px">
+    <input type="password" id="efid-pin" placeholder="PIN (6 số)" maxlength="6" style="min-width:100px">
+    <button type="button" id="efid-xac-nhan">Đăng nhập</button>
+    <span id="efid-bao" class="loi"></span>
+  </div>
 
   <h2>Dashboard nguồn lead</h2>
   <div class="thong-ke">
@@ -126,6 +133,27 @@ function dauAdmin() {
   return { Authorization: 'Bearer ' + $('khoa').value.trim(), 'X-Admin-Actor': $('actor').value.trim() || 'khong_ro' };
 }
 function dauAdminJson() { return { ...dauAdmin(), 'Content-Type': 'application/json' }; }
+
+// Đăng nhập admin bằng chính tài khoản EF-ID (phải được gán is_admin=1 trong ctv_profiles — gán tay, không
+// có UI tự cấp). Thành công thì điền thẳng session_token vào ô "Khoá quản trị" — mọi API phía dưới dùng
+// nguyên như cũ, không cần sửa gì thêm.
+$('nut-dn-efid').addEventListener('click', () => { $('khung-dn-efid').hidden = !$('khung-dn-efid').hidden; });
+$('efid-xac-nhan').addEventListener('click', async () => {
+  const dinh_danh = $('efid-dinh-danh').value.trim(); const pin = $('efid-pin').value.trim();
+  if (!dinh_danh || !pin) { $('efid-bao').textContent = 'Nhập đủ SĐT/mã và PIN.'; return; }
+  $('efid-bao').textContent = 'Đang đăng nhập…';
+  const r = await fetch(API_GOC + '/api/v1/ctv/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dinh_danh, pin }) });
+  const d = await r.json();
+  if (!d.ok) { $('efid-bao').textContent = d.chi_tiet || 'Đăng nhập không thành công.'; return; }
+  if (!d.is_admin) { $('efid-bao').textContent = 'Tài khoản ' + (d.ten || d.efc_code) + ' đăng nhập được nhưng CHƯA được cấp quyền quản trị.'; return; }
+  $('khoa').value = d.session_token;
+  $('actor').value = d.ten || d.efc_code || 'khong_ro';
+  sessionStorage.setItem('qt', d.session_token); sessionStorage.setItem('qt-actor', $('actor').value);
+  $('efid-bao').textContent = ''; $('khung-dn-efid').hidden = true;
+  $('efid-dinh-danh').value = ''; $('efid-pin').value = '';
+  $('bao').textContent = 'Đã đăng nhập bằng EF-ID: ' + (d.ten || d.efc_code) + '. Bấm Tải để xem dữ liệu.';
+});
 
 async function tai(tiep) {
   const k = $('khoa').value.trim(); if (!k) return ($('bao').textContent = 'Nhập khoá quản trị.');
