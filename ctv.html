@@ -83,6 +83,38 @@
   /* Hồ sơ */
   .dong-tt { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--vien); font-size: .92rem; }
   .dong-tt span:first-child { color: var(--phu); }
+
+  /* Hero đầu app — hiện trên mọi tab sau khi đăng nhập */
+  .hero { background: linear-gradient(135deg, var(--mau), var(--mau-toi) 72%); border-radius: 16px; padding: 16px;
+    display: flex; gap: 12px; align-items: center; color: #fff; margin-bottom: 6px; }
+  .hero-avatar { width: 48px; height: 48px; border-radius: 999px; background: var(--vang); color: var(--mau-toi);
+    font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; flex: none; }
+  .hero-ten { font-weight: 700; font-size: 1.05rem; line-height: 1.3; }
+  .hero-ma { font-size: .78rem; opacity: .9; margin-top: 2px; }
+  .hero-ma b { color: var(--vang-nhat); letter-spacing: .5px; }
+
+  /* Trạng thái trống có hồn: biểu tượng + 1 câu + nút hành động ngay tại chỗ */
+  .trong { text-align: center; padding: 26px 16px; background: var(--the-nen); border: 1px dashed var(--vien);
+    border-radius: 16px; margin-top: 14px; }
+  .trong .bieu-tuong { font-size: 2.3rem; line-height: 1; }
+  .trong p { color: var(--phu); margin: 10px 0 0; font-size: .95rem; }
+  .trong button { max-width: 280px; margin: 16px auto 0; display: block; }
+  .buoc { display: flex; gap: 10px; align-items: flex-start; text-align: left; margin-top: 12px; }
+  .buoc .so-buoc { flex: none; width: 26px; height: 26px; border-radius: 999px; background: var(--vang-nhat);
+    color: var(--mau); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: .85rem; }
+  .buoc .loi-buoc { font-size: .92rem; padding-top: 2px; }
+
+  /* Ô số liệu nổi hơn */
+  .dem-trang-thai .o { flex: 1; min-width: 104px; border-top: 3px solid var(--vang); box-shadow: 0 1px 4px rgba(22,57,99,.06); }
+  .dem-trang-thai .o b { font-size: 1.5rem; }
+
+  /* Màn rộng (iPad/desktop): đóng khung app giữa màn, không để loãng */
+  @media (min-width: 700px) {
+    body { background: #ECE5D3; }
+    main { background: var(--nen); min-height: 100vh; box-shadow: 0 0 36px rgba(22,57,99,.12);
+      border-left: 1px solid var(--vien); border-right: 1px solid var(--vien); }
+    .thanh-duoi { border-left: 1px solid var(--vien); border-right: 1px solid var(--vien); }
+  }
 </style>
 </head>
 <body>
@@ -125,9 +157,18 @@
   </section>
 
   <section id="khung-app" hidden>
+    <!-- Hero: hiện trên mọi tab -->
+    <header class="hero">
+      <div class="hero-avatar" id="hero-avatar">?</div>
+      <div>
+        <div class="hero-ten" id="hero-ten">—</div>
+        <div class="hero-ma"><span id="hero-efc">—</span> · Mã giới thiệu <b id="ma-ctv-1"></b></div>
+      </div>
+    </header>
+
     <!-- Tab: Hôm nay -->
     <div id="tab-homnay" class="tab-noi-dung">
-      <div class="top"><h1>Quà hôm nay</h1><span class="huy-hieu" id="ma-ctv-1"></span></div>
+      <h1>Quà hôm nay</h1>
       <p class="phu">Mỗi lần chia sẻ, link đã gắn sẵn mã của bạn</p>
       <div id="danh-sach-qua"></div>
       <p class="bao" id="bao-qua" role="status"></p>
@@ -245,6 +286,9 @@ async function moApp() {
   meHienTai = me;
   $('khung-dang-nhap').hidden = true; $('khung-app').hidden = false; $('thanh-duoi').hidden = false;
   $('ma-ctv-1').textContent = me.referrer_code;
+  $('hero-avatar').textContent = (me.ten || '?').trim().charAt(0).toUpperCase();
+  $('hero-ten').textContent = me.ten || 'CTV ' + me.referrer_code;
+  $('hero-efc').textContent = me.efc_code || me.referrer_code;
   $('ho-so-ten').textContent = me.ten || '—';
   $('ho-so-ma').textContent = me.efc_code || '—';
   $('ho-so-ref').textContent = me.referrer_code;
@@ -260,7 +304,14 @@ async function taiTabHomNay() {
   const d = await goiApi('/api/v1/ctv/hooks');
   if (!d.ok) return;
   const ds = $('danh-sach-qua'); ds.textContent = '';
-  if (!d.hooks.length) { ds.innerHTML = '<p class="phu">Chưa có quà nào. Hỏi admin thêm quà mới.</p>'; return; }
+  if (!d.hooks.length) {
+    ds.innerHTML = '<div class="trong"><div class="bieu-tuong">🎁</div>'
+      + '<div class="buoc"><span class="so-buoc">1</span><span class="loi-buoc">Admin đăng quà/ưu đãi lên hệ thống</span></div>'
+      + '<div class="buoc"><span class="so-buoc">2</span><span class="loi-buoc">Bạn bấm Chia sẻ — link tự gắn mã <b>' + d.referrer_code + '</b></span></div>'
+      + '<div class="buoc"><span class="so-buoc">3</span><span class="loi-buoc">Khách bấm vào, để lại SĐT, bạn thấy ngay ở tab Khách</span></div>'
+      + '<p>Hiện chưa có quà nào — hỏi admin đăng quà mới nhé.</p></div>';
+    return;
+  }
   for (const h of d.hooks) ds.appendChild(theQua(h, d.referrer_code));
 }
 function theQua(h, referrerCode) {
@@ -304,7 +355,13 @@ async function taiTabKhach() {
     oDem.appendChild(o);
   }
   const ds = $('danh-sach-khach'); ds.textContent = '';
-  if (!d.leads.length) { ds.innerHTML = '<p class="phu">Chưa có khách nào. Chia sẻ quà ở tab Hôm nay để bắt đầu.</p>'; return; }
+  if (!d.leads.length) {
+    ds.innerHTML = '<div class="trong"><div class="bieu-tuong">👥</div>'
+      + '<p>Chưa có khách nào. Qua tab Hôm nay chia sẻ quà để có khách đầu tiên.</p>'
+      + '<button type="button" id="nut-trong-sang-qua">Sang tab Hôm nay</button></div>';
+    $('nut-trong-sang-qua').onclick = () => chuyenTab('homnay');
+    return;
+  }
   for (const l of d.leads) ds.appendChild(theKhach(l));
 }
 function theKhach(l) {
@@ -355,7 +412,11 @@ async function taiTabThuNhap() {
   }
   const h = await goiApi('/api/v1/ctv/commissions');
   const ds = $('danh-sach-hoahong'); ds.textContent = '';
-  if (!h.ok || !h.rows.length) { ds.innerHTML = '<p class="phu">Chưa có hoa hồng nào ghi nhận.</p>'; return; }
+  if (!h.ok || !h.rows.length) {
+    ds.innerHTML = '<div class="trong"><div class="bieu-tuong">💰</div>'
+      + '<p>Chưa có hoa hồng nào. Hoa hồng ghi nhận khi khách bạn giới thiệu phát sinh đơn thật.</p></div>';
+    return;
+  }
   for (const r of h.rows) {
     const div = document.createElement('div'); div.className = 'khach';
     const soTien = (r.amount_minor || 0).toLocaleString('vi-VN') + ' ' + (r.currency || 'VND');
