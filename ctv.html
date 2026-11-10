@@ -69,7 +69,7 @@
   .trang-thai-nhan { font-size: .72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--vang-nhat); color: #6B5A32; }
   .trang-thai-nhan.CONVERTED { background: var(--dat-nen); color: var(--dat); }
   .trang-thai-nhan.WITHDRAWN, .trang-thai-nhan.DISQUALIFIED { background: var(--loi-nen); color: var(--loi); }
-  .nut-nho { width: auto; min-height: 38px; margin: 0; padding: 0 12px; font-size: .82rem; }
+  .nut-nho { width: auto; min-height: 38px; margin: 0; padding: 0 10px; font-size: .78rem; white-space: nowrap; }
 
   /* Lộ trình */
   .bac { background: var(--the-nen); border: 1px solid var(--vien); border-radius: 14px; padding: 16px; margin-top: 12px; position: relative; }
@@ -89,18 +89,37 @@
 <main>
   <section id="khung-dang-nhap">
     <div class="dau-app"><img src="icon-192.png" alt="EFCLoyalty"><h1>EFCLoyalty</h1></div>
-    <p class="phu">Lần đầu: nhập SĐT và tự đặt mã PIN để đăng ký. Lần sau: nhập lại đúng SĐT + PIN để đăng nhập.</p>
+    <p class="phu">Tài khoản EFCLoyalty dùng chung một ID với EFCommunity/FaCare Life. Đã có tài khoản thì đăng nhập thẳng; chưa có thì đăng ký mới bên dưới.</p>
     <div class="the">
-      <form id="form-dang-nhap" novalidate>
+      <div class="hang-2nut" style="margin-top:0">
+        <button type="button" id="nut-chon-dangnhap">Đăng nhập</button>
+        <button type="button" id="nut-chon-dangky" class="phu-nut">Đăng ký mới</button>
+      </div>
+
+      <form id="form-dang-nhap">
+        <label for="dinh-danh">Số điện thoại hoặc mã EFC-xxxxxx</label>
+        <input type="text" id="dinh-danh" autocomplete="username" placeholder="09xx xxx xxx hoặc EFC-000123" required>
+        <label for="pin-dn">Mã PIN (6 số)</label>
+        <input type="password" id="pin-dn" inputmode="numeric" maxlength="6" placeholder="••••••" required>
+        <button type="submit">Đăng nhập</button>
+        <p class="bao" id="bao-dang-nhap" role="status" aria-live="polite"></p>
+      </form>
+
+      <form id="form-dang-ky" hidden>
+        <label for="ten">Họ tên</label>
+        <input type="text" id="ten" autocomplete="name" required>
         <label for="sdt">Số điện thoại</label>
         <input type="tel" id="sdt" autocomplete="tel" inputmode="tel" placeholder="09xx xxx xxx" required>
-        <label for="pin">Mã PIN (4-6 số, tự đặt)</label>
-        <input type="password" id="pin" inputmode="numeric" maxlength="6" placeholder="••••••" required>
-        <div class="hang-2nut">
-          <button type="submit" id="nut-dang-ky">Đăng ký (lần đầu)</button>
-          <button type="button" id="nut-dang-nhap" class="phu-nut">Đăng nhập (đã có)</button>
-        </div>
-        <p class="bao" id="bao-dang-nhap" role="status" aria-live="polite"></p>
+        <label for="nam-sinh">Năm sinh</label>
+        <input type="number" id="nam-sinh" inputmode="numeric" placeholder="vd: 1995" required>
+        <label for="pin-dk">Tự đặt mã PIN (6 số)</label>
+        <input type="password" id="pin-dk" inputmode="numeric" maxlength="6" placeholder="••••••" required>
+        <label style="display:flex; align-items:center; gap:8px; font-weight:400; margin-top:14px;">
+          <input type="checkbox" id="dong-y" style="width:auto; min-height:auto;" required>
+          Tôi đồng ý cho hệ thống lưu thông tin tài khoản để đăng nhập.
+        </label>
+        <button type="submit">Đăng ký</button>
+        <p class="bao" id="bao-dang-ky" role="status" aria-live="polite"></p>
       </form>
     </div>
   </section>
@@ -129,18 +148,23 @@
       <div id="danh-sach-bac"></div>
     </div>
 
-    <!-- Tab: Thu nhập -->
+    <!-- Tab: Kết quả (đổi tên từ "Thu nhập" 10/11/2026 — chỉ có số lượng, không phải tiền, tránh hiểu nhầm) -->
     <div id="tab-thunhap" class="tab-noi-dung" hidden>
-      <h1>Thu nhập</h1>
-      <p class="phu">Số liệu hoạt động của bạn trên nền tảng này. Số tiền hoa hồng thật tính và chi trả ở hệ thống của từng chương trình (vd EFCare), không hiển thị ở đây.</p>
+      <h1>Kết quả</h1>
+      <p class="phu">Đây không phải số tiền hoa hồng — chỉ là số lượng hoạt động. Hoa hồng tính theo đơn thật, EFCare đối soát và chuyển khoản hàng tháng.</p>
       <div class="dem-trang-thai" id="dem-thu-nhap"></div>
+      <h2 style="margin-top:20px">Hoa hồng</h2>
+      <div id="danh-sach-hoahong"></div>
+      <p class="bao" id="bao-hoahong" role="status"></p>
     </div>
 
     <!-- Tab: Hồ sơ -->
     <div id="tab-hoso" class="tab-noi-dung" hidden>
       <h1>Hồ sơ</h1>
       <div class="the">
-        <div class="dong-tt"><span>Mã CTV</span><span id="ho-so-ma"></span></div>
+        <div class="dong-tt"><span>Họ tên</span><span id="ho-so-ten"></span></div>
+        <div class="dong-tt"><span>Mã EF-ID</span><span id="ho-so-ma"></span></div>
+        <div class="dong-tt"><span>Mã giới thiệu</span><span id="ho-so-ref"></span></div>
         <div class="dong-tt"><span>Số điện thoại</span><span id="ho-so-sdt"></span></div>
         <div class="dong-tt"><span>Bậc hiện tại</span><span id="ho-so-bac"></span></div>
         <div class="dong-tt"><span>Tham gia</span><span id="ho-so-ngay"></span></div>
@@ -154,7 +178,7 @@
   <button type="button" data-tab="homnay"><span class="icon">🎁</span>Hôm nay</button>
   <button type="button" data-tab="khach"><span class="icon">👥</span>Khách</button>
   <button type="button" data-tab="lotrinh"><span class="icon">🪜</span>Lộ trình</button>
-  <button type="button" data-tab="thunhap"><span class="icon">📈</span>Thu nhập</button>
+  <button type="button" data-tab="thunhap"><span class="icon">📈</span>Kết quả</button>
   <button type="button" data-tab="hoso"><span class="icon">👤</span>Hồ sơ</button>
 </nav>
 
@@ -168,32 +192,42 @@ const TEN_TRANG_THAI = { NEW: 'Mới', CONTACTABLE: 'Có thể liên hệ', QUAL
   CONVERTED: 'Đã chuyển đổi', DISQUALIFIED: 'Không đạt', WITHDRAWN: 'Đã rút' };
 
 function bao(id, chu, loai = '') { const p = $(id); p.textContent = chu; p.className = 'bao ' + loai; }
-const LOI = { SAI_DANH_TINH: 'Số điện thoại chưa đúng.', SAI_PIN: 'Mã PIN phải gồm 4-6 chữ số.',
-  DA_DANG_KY: 'SĐT này đã đăng ký — bấm "Đăng nhập" thay vì đăng ký.', CHUA_DANG_KY: 'SĐT này chưa đăng ký — bấm "Đăng ký" trước.',
-  TAM_KHOA: 'Sai PIN quá nhiều lần, tài khoản tạm khoá 15 phút.', CHUA_CAU_HINH: 'Hệ thống đang tạm dừng.', THU_LAI: 'Vui lòng thử lại.' };
+const LOI = { CHUA_CAU_HINH: 'Hệ thống đang tạm dừng.', SAI_DU_LIEU: 'Thiếu thông tin đăng nhập.',
+  THIEU_TEN: 'Vui lòng nhập họ tên.', SAI_DANH_TINH: 'Số điện thoại chưa đúng.', SAI_PIN: 'Mã PIN phải gồm đúng 6 chữ số.',
+  THIEU_NAM_SINH: 'Vui lòng nhập năm sinh.', CHUA_DONG_Y: 'Cần đồng ý để tạo tài khoản.' };
 
-function layThongTin() {
-  const phone = $('sdt').value.trim(); const pin = $('pin').value.trim();
-  if (!phone) { bao('bao-dang-nhap', 'Vui lòng nhập số điện thoại.', 'loi'); return null; }
-  if (!/^\d{4,6}$/.test(pin)) { bao('bao-dang-nhap', LOI.SAI_PIN, 'loi'); return null; }
-  return { phone, pin };
-}
+// Chuyển tab Đăng nhập / Đăng ký
+$('nut-chon-dangnhap').addEventListener('click', () => { $('nut-chon-dangnhap').classList.remove('phu-nut'); $('nut-chon-dangky').classList.add('phu-nut'); $('form-dang-nhap').hidden = false; $('form-dang-ky').hidden = true; });
+$('nut-chon-dangky').addEventListener('click', () => { $('nut-chon-dangky').classList.remove('phu-nut'); $('nut-chon-dangnhap').classList.add('phu-nut'); $('form-dang-ky').hidden = false; $('form-dang-nhap').hidden = true; });
 
-async function guiDangNhap(duong, nutId) {
-  const tt = layThongTin(); if (!tt) return;
-  $(nutId).disabled = true; bao('bao-dang-nhap', 'Đang xử lý…');
+async function guiAuth(duong, body, baoId) {
+  bao(baoId, 'Đang xử lý…');
   try {
-    const r = await fetch(API_GOC + duong, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(tt) });
+    const r = await fetch(API_GOC + duong, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const d = await r.json();
-    $(nutId).disabled = false;
-    if (!d.ok) { bao('bao-dang-nhap', LOI[d.ma] || 'Không thành công.', 'loi'); return; }
+    if (!d.ok) { bao(baoId, d.ma === 'EF_ID_TU_CHOI' ? d.chi_tiet : (LOI[d.ma] || 'Không thành công.'), 'loi'); return; }
     localStorage.setItem(KHO_PHIEN, d.session_token);
     await moApp();
-  } catch (_) { bao('bao-dang-nhap', 'Mất mạng, thử lại.', 'loi'); $(nutId).disabled = false; }
+  } catch (_) { bao(baoId, 'Mất mạng, thử lại.', 'loi'); }
 }
 
-$('form-dang-nhap').addEventListener('submit', e => { e.preventDefault(); guiDangNhap('/api/v1/ctv/auth/register', 'nut-dang-ky'); });
-$('nut-dang-nhap').addEventListener('click', () => guiDangNhap('/api/v1/ctv/auth/login', 'nut-dang-nhap'));
+$('form-dang-nhap').addEventListener('submit', e => {
+  e.preventDefault();
+  const dinhDanh = $('dinh-danh').value.trim(); const pin = $('pin-dn').value.trim();
+  if (!dinhDanh || !/^\d{6}$/.test(pin)) { bao('bao-dang-nhap', !dinhDanh ? 'Nhập SĐT hoặc mã EFC-xxxxxx.' : LOI.SAI_PIN, 'loi'); return; }
+  guiAuth('/api/v1/ctv/auth/login', { dinh_danh: dinhDanh, pin }, 'bao-dang-nhap');
+});
+$('form-dang-ky').addEventListener('submit', e => {
+  e.preventDefault();
+  const ten = $('ten').value.trim(); const phone = $('sdt').value.trim();
+  const namSinh = Number($('nam-sinh').value); const pin = $('pin-dk').value.trim(); const dongY = $('dong-y').checked;
+  if (!ten) return bao('bao-dang-ky', LOI.THIEU_TEN, 'loi');
+  if (!phone) return bao('bao-dang-ky', LOI.SAI_DANH_TINH, 'loi');
+  if (!namSinh) return bao('bao-dang-ky', LOI.THIEU_NAM_SINH, 'loi');
+  if (!/^\d{6}$/.test(pin)) return bao('bao-dang-ky', LOI.SAI_PIN, 'loi');
+  if (!dongY) return bao('bao-dang-ky', LOI.CHUA_DONG_Y, 'loi');
+  guiAuth('/api/v1/ctv/auth/register', { ten, phone, nam_sinh: namSinh, pin, dong_y: dongY }, 'bao-dang-ky');
+});
 $('nut-dang-xuat').addEventListener('click', () => { localStorage.removeItem(KHO_PHIEN); location.reload(); });
 
 function goiApi(duong) {
@@ -211,8 +245,10 @@ async function moApp() {
   meHienTai = me;
   $('khung-dang-nhap').hidden = true; $('khung-app').hidden = false; $('thanh-duoi').hidden = false;
   $('ma-ctv-1').textContent = me.referrer_code;
-  $('ho-so-ma').textContent = me.referrer_code;
-  $('ho-so-sdt').textContent = me.identity_masked || '—';
+  $('ho-so-ten').textContent = me.ten || '—';
+  $('ho-so-ma').textContent = me.efc_code || '—';
+  $('ho-so-ref').textContent = me.referrer_code;
+  $('ho-so-sdt').textContent = me.phone_masked || '—';
   $('ho-so-bac').textContent = me.bac_ctv[me.tier].ten;
   $('ho-so-ngay').textContent = new Date(me.created_at).toLocaleDateString('vi-VN');
   await taiTabHomNay();
@@ -274,15 +310,17 @@ async function taiTabKhach() {
 function theKhach(l) {
   const div = document.createElement('div'); div.className = 'khach';
   const tt = document.createElement('div'); tt.className = 'tt';
-  tt.innerHTML = '<div class="sdt">' + l.identity_masked + '</div><div class="ngay">' + new Date(l.created_at).toLocaleDateString('vi-VN') + '</div>';
+  tt.innerHTML = '<div class="sdt">' + l.identity_masked + '</div><div class="ngay">' + new Date(l.created_at).toLocaleDateString('vi-VN') + '</div>'
+    + (l.goi_y ? '<div class="phu" style="margin-top:4px; font-size:.82rem;">' + l.goi_y + '</div>' : '');
   div.appendChild(tt);
   const phai = document.createElement('div'); phai.style.textAlign = 'right';
   const nhan = document.createElement('span'); nhan.className = 'trang-thai-nhan ' + l.status; nhan.textContent = TEN_TRANG_THAI[l.status] || l.status;
   phai.appendChild(nhan);
   if (!['CONVERTED', 'WITHDRAWN', 'DISQUALIFIED'].includes(l.status)) {
+    // Bấm vào KHÔNG nhắc riêng khách này — mở lại hộp chia sẻ link giới thiệu chung của bạn (đúng tên, tránh hiểu lầm).
     const nutNhac = document.createElement('button'); nutNhac.className = 'nut-nho'; nutNhac.style.display = 'block'; nutNhac.style.marginTop = '6px';
-    nutNhac.textContent = 'Nhắc lại'; nutNhac.style.marginLeft = 'auto';
-    nutNhac.onclick = () => chiaSeLink('Nhắc bạn xem lại', GOC_TRANG + '?ref=' + encodeURIComponent(meHienTai.referrer_code), 'bao-khach');
+    nutNhac.textContent = 'Chia sẻ lại lời mời'; nutNhac.style.marginLeft = 'auto';
+    nutNhac.onclick = () => chiaSeLink('Chia sẻ lại lời mời', GOC_TRANG + '?ref=' + encodeURIComponent(meHienTai.referrer_code), 'bao-khach');
     phai.appendChild(nutNhac);
   }
   div.appendChild(phai);
@@ -300,17 +338,32 @@ function veLoTrinh(me) {
   }
 }
 
-// ---------- Tab Thu nhập (chỉ đếm hoạt động, không có số tiền — tiền tính ở hệ thống từng chương trình) ----------
+// ---------- Tab Kết quả (số lượng hoạt động) + Hoa hồng thật (sổ cái commission_ledger) ----------
+const TEN_LOAI_HOA_HONG = { DIRECT_REFERRAL: 'Giới thiệu trực tiếp', MANAGEMENT_BONUS: 'Thưởng quản lý' };
+const TEN_TRANG_THAI_HOA_HONG = { PENDING_VALIDATION: 'Đang chờ', APPROVED: 'Đã duyệt', PAYABLE: 'Chờ chi trả',
+  PAID: 'Đã chi trả', REJECTED: 'Từ chối', ON_HOLD: 'Tạm giữ', REVERSED: 'Đã đảo' };
 let taiThuNhapRoi = false;
 async function taiTabThuNhap() {
   if (taiThuNhapRoi) return; taiThuNhapRoi = true;
   const d = await goiApi('/api/v1/ctv/my-leads');
-  if (!d.ok) return;
-  const oDem = $('dem-thu-nhap'); oDem.textContent = '';
-  const tong = Object.values(d.dem_theo_trang_thai).reduce((a, b) => a + b, 0);
-  const oTong = document.createElement('div'); oTong.className = 'o'; oTong.innerHTML = '<b>' + tong + '</b>Tổng khách'; oDem.appendChild(oTong);
-  const oChuyenDoi = document.createElement('div'); oChuyenDoi.className = 'o';
-  oChuyenDoi.innerHTML = '<b>' + (d.dem_theo_trang_thai.CONVERTED || 0) + '</b>Đã chuyển đổi'; oDem.appendChild(oChuyenDoi);
+  if (d.ok) {
+    const oDem = $('dem-thu-nhap'); oDem.textContent = '';
+    const tong = Object.values(d.dem_theo_trang_thai).reduce((a, b) => a + b, 0);
+    const oTong = document.createElement('div'); oTong.className = 'o'; oTong.innerHTML = '<b>' + tong + '</b>Tổng khách'; oDem.appendChild(oTong);
+    const oChuyenDoi = document.createElement('div'); oChuyenDoi.className = 'o';
+    oChuyenDoi.innerHTML = '<b>' + (d.dem_theo_trang_thai.CONVERTED || 0) + '</b>Đã chuyển đổi'; oDem.appendChild(oChuyenDoi);
+  }
+  const h = await goiApi('/api/v1/ctv/commissions');
+  const ds = $('danh-sach-hoahong'); ds.textContent = '';
+  if (!h.ok || !h.rows.length) { ds.innerHTML = '<p class="phu">Chưa có hoa hồng nào ghi nhận.</p>'; return; }
+  for (const r of h.rows) {
+    const div = document.createElement('div'); div.className = 'khach';
+    const soTien = (r.amount_minor || 0).toLocaleString('vi-VN') + ' ' + (r.currency || 'VND');
+    div.innerHTML = '<div class="tt"><div class="sdt">' + soTien + '</div><div class="ngay">'
+      + (TEN_LOAI_HOA_HONG[r.loai_hoa_hong] || r.loai_hoa_hong) + ' · ' + new Date(r.created_at).toLocaleDateString('vi-VN') + '</div></div>'
+      + '<span class="trang-thai-nhan ' + (r.status === 'PAID' ? 'CONVERTED' : '') + '">' + (TEN_TRANG_THAI_HOA_HONG[r.status] || r.status) + '</span>';
+    ds.appendChild(div);
+  }
 }
 
 // ---------- Chuyển tab ----------

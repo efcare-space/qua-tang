@@ -39,6 +39,7 @@
   <div class="dau-app"><img src="icon-192.png" alt="EFCLoyalty"><h1>Quản trị · EFCLoyalty</h1></div>
   <div class="hang">
     <input type="password" id="khoa" placeholder="Khoá quản trị" autocomplete="off">
+    <input type="text" id="actor" placeholder="Tên của bạn (ghi vào nhật ký)" autocomplete="off" style="min-width:200px">
     <select id="chuong-trinh"><option value="">Mọi chương trình</option><option>EFCARE</option></select>
     <select id="loc"><option value="">Mọi trạng thái</option><option>NEW</option><option>CONTACTABLE</option><option>QUALIFIED</option><option>NURTURING</option><option>CONVERTED</option><option>DISQUALIFIED</option><option>WITHDRAWN</option></select>
     <button id="tai">Tải</button><button id="them" disabled>Tải thêm</button><button id="tsv" disabled>Sao chép TSV</button>
@@ -82,10 +83,35 @@
   <table><thead><tr><th>Banner</th><th>Tên</th><th>Link</th><th>Trạng thái</th><th>Ngày</th><th></th></tr></thead><tbody id="ds-qua"></tbody></table>
   </div>
 
-  <h2>Quản lý CTV (lộ trình 4 bậc)</h2>
-  <p class="phu">Nâng bậc sau khi CTV hoàn thành đào tạo ngoài nền tảng này — không tự động.</p>
+  <h2>Quản lý CTV (lộ trình 4 bậc, định danh EF-ID)</h2>
+  <p class="phu">Nâng bậc sau khi CTV hoàn thành đào tạo ngoài nền tảng này — không tự động. "Quản lý" là người hưởng 10% thưởng quản lý nội bộ — gán tay theo hợp đồng, không suy từ người giới thiệu.</p>
   <div class="bang-cuon">
-  <table><thead><tr><th>Mã CTV</th><th>SĐT (che)</th><th>Bậc</th><th>Số khách</th><th>Tham gia</th><th>Nâng/hạ bậc</th></tr></thead><tbody id="ds-ctv"></tbody></table>
+  <table><thead><tr><th>Tên</th><th>Mã EF-ID</th><th>Mã giới thiệu</th><th>SĐT (che)</th><th>Bậc</th><th>Số khách</th><th>Người quản lý</th><th>Tham gia</th><th>Nâng/hạ bậc</th><th>Gán quản lý</th></tr></thead><tbody id="ds-ctv"></tbody></table>
+  </div>
+
+  <h2>Quản lý Offer (giá theo từng chiến dịch)</h2>
+  <form class="hang" id="form-them-offer" novalidate>
+    <input type="text" id="offer-ma" placeholder="Mã (vd: KHOA-A)" required>
+    <input type="text" id="offer-ten" placeholder="Tên offer" style="min-width:200px" required>
+    <input type="number" id="offer-gia" placeholder="Giá (đồng, để trống = miễn phí)">
+    <button type="submit" id="offer-nut-them">Tạo offer (DRAFT)</button>
+  </form>
+  <p id="offer-bao" role="status"></p>
+  <div class="bang-cuon">
+  <table><thead><tr><th>Mã</th><th>Tên</th><th>Giá</th><th>Trạng thái</th><th></th></tr></thead><tbody id="ds-offer"></tbody></table>
+  </div>
+
+  <h2>Đơn hàng &amp; hoa hồng</h2>
+  <p class="phu">Đợt này: xác nhận thu tiền bằng tay (chờ webhook thật từ EFCare). Đánh dấu "đã thu tiền" sẽ tự tính hoa hồng 20%/10% nếu đơn gắn đúng mã Lead có người giới thiệu.</p>
+  <form class="hang" id="form-them-order" novalidate>
+    <input type="text" id="order-offer" placeholder="Mã offer (off_…)" style="min-width:200px" required>
+    <input type="text" id="order-lead" placeholder="Mã Lead (led_…, để trống nếu không có)">
+    <input type="number" id="order-tien" placeholder="Số tiền (đồng)" required>
+    <button type="submit" id="order-nut-them">Tạo đơn</button>
+  </form>
+  <p id="order-bao" role="status"></p>
+  <div class="bang-cuon">
+  <table><thead><tr><th>Mã đơn</th><th>Offer</th><th>Lead</th><th>Số tiền</th><th>Trạng thái</th><th></th></tr></thead><tbody id="ds-order"></tbody></table>
   </div>
 
 </main>
@@ -94,6 +120,12 @@ const API_GOC = 'https://ctv-platform-lead-identity.efcare.workers.dev';
 const $ = id => document.getElementById(id);
 let rows = [], next = null;
 $('khoa').value = sessionStorage.getItem('qt') || '';      // chỉ giữ trong phiên trình duyệt, đóng tab là mất
+$('actor').value = sessionStorage.getItem('qt-actor') || '';
+$('actor').addEventListener('change', () => sessionStorage.setItem('qt-actor', $('actor').value.trim()));
+function dauAdmin() {
+  return { Authorization: 'Bearer ' + $('khoa').value.trim(), 'X-Admin-Actor': $('actor').value.trim() || 'khong_ro' };
+}
+function dauAdminJson() { return { ...dauAdmin(), 'Content-Type': 'application/json' }; }
 
 async function tai(tiep) {
   const k = $('khoa').value.trim(); if (!k) return ($('bao').textContent = 'Nhập khoá quản trị.');
@@ -103,7 +135,7 @@ async function tai(tiep) {
   if ($('chuong-trinh').value) q.set('program_code', $('chuong-trinh').value);
   if ($('loc').value) q.set('status', $('loc').value);
   if (tiep && next) q.set('cursor', next);
-  const r = await fetch(API_GOC + '/api/v1/admin/leads?' + q, { headers: { Authorization: 'Bearer ' + k } });
+  const r = await fetch(API_GOC + '/api/v1/admin/leads?' + q, { headers: dauAdmin() });
   if (r.status === 401) { $('bao').innerHTML = '<span class="loi">Sai khoá quản trị.</span>'; return; }
   const d = await r.json();
   if (!d.ok) { $('bao').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + '</span>'; return; }
@@ -132,7 +164,7 @@ $('tai').onclick = () => tai(false); $('them').onclick = () => tai(true);
 async function taiThongKe() {
   const k = $('khoa').value.trim(); if (!k) return;
   const q = new URLSearchParams(); if ($('chuong-trinh').value) q.set('program_code', $('chuong-trinh').value);
-  const r = await fetch(API_GOC + '/api/v1/admin/leads/by-source?' + q, { headers: { Authorization: 'Bearer ' + k } });
+  const r = await fetch(API_GOC + '/api/v1/admin/leads/by-source?' + q, { headers: dauAdmin() });
   if (!r.ok) return;
   const d = await r.json(); if (!d.ok) return;
   const dien = (id, ds, cot) => {
@@ -153,7 +185,7 @@ $('pii-xem').onclick = async () => {
   if (!k) return ($('pii-ket-qua').innerHTML = '<span class="loi">Nhập khoá quản trị.</span>');
   if (!leadId || !lyDo) return ($('pii-ket-qua').innerHTML = '<span class="loi">Cần mã Lead và lý do.</span>');
   const r = await fetch(API_GOC + '/api/v1/admin/leads/' + encodeURIComponent(leadId) + '/pii?reason=' + encodeURIComponent(lyDo),
-    { headers: { Authorization: 'Bearer ' + k } });
+    { headers: dauAdmin() });
   const d = await r.json();
   if (!d.ok) { $('pii-ket-qua').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + '</span>'; return; }
   $('pii-ket-qua').textContent = d.identities.map(i => i.identity_type + ': ' + i.identity_value + ' (' + i.status + ')').join(' · ');
@@ -161,7 +193,7 @@ $('pii-xem').onclick = async () => {
 
 async function taiDanhSachQua() {
   const k = $('khoa').value.trim(); if (!k) return;
-  const r = await fetch(API_GOC + '/api/v1/admin/hooks', { headers: { Authorization: 'Bearer ' + k } });
+  const r = await fetch(API_GOC + '/api/v1/admin/hooks', { headers: dauAdmin() });
   if (!r.ok) return;
   const d = await r.json(); if (!d.ok) return;
   const tb = $('ds-qua'); tb.textContent = '';
@@ -177,7 +209,7 @@ async function taiDanhSachQua() {
     if (h.status === 'ACTIVE') {
       const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'lưu kho';
       btn.onclick = async () => {
-        await fetch(API_GOC + '/api/v1/admin/hooks/' + encodeURIComponent(h.id) + '/archive', { method: 'POST', headers: { Authorization: 'Bearer ' + k } });
+        await fetch(API_GOC + '/api/v1/admin/hooks/' + encodeURIComponent(h.id) + '/archive', { method: 'POST', headers: dauAdmin() });
         taiDanhSachQua();
       };
       tdNut.appendChild(btn);
@@ -191,7 +223,7 @@ $('form-them-qua').addEventListener('submit', async e => {
   const title = $('qua-tieu-de').value.trim(); const resource_url = $('qua-link').value.trim();
   if (!title || !resource_url) return ($('qua-bao').innerHTML = '<span class="loi">Cần tên và link.</span>');
   $('qua-nut-them').disabled = true; $('qua-bao').textContent = 'Đang thêm, đang dò banner…';
-  const r = await fetch(API_GOC + '/api/v1/admin/hooks', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + k }, body: JSON.stringify({ title, resource_url }) });
+  const r = await fetch(API_GOC + '/api/v1/admin/hooks', { method: 'POST', headers: dauAdminJson(), body: JSON.stringify({ title, resource_url }) });
   const d = await r.json();
   $('qua-nut-them').disabled = false;
   if (!d.ok) { $('qua-bao').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + '</span>'; return; }
@@ -204,27 +236,119 @@ $('tai').addEventListener('click', taiDanhSachQua);
 const TEN_BAC = { 0: 'Bán ngay', 1: 'Xây kênh', 2: 'Tạo app/Skill', 3: 'Truyền nhân' };
 async function taiDanhSachCtv() {
   const k = $('khoa').value.trim(); if (!k) return;
-  const r = await fetch(API_GOC + '/api/v1/admin/ctv', { headers: { Authorization: 'Bearer ' + k } });
+  const r = await fetch(API_GOC + '/api/v1/admin/ctv', { headers: dauAdmin() });
   if (!r.ok) return;
   const d = await r.json(); if (!d.ok) return;
   const tb = $('ds-ctv'); tb.textContent = '';
   for (const c of d.rows) {
     const tr = document.createElement('tr');
-    [c.referrer_code, c.identity_masked, TEN_BAC[c.tier] + ' (' + c.tier + ')', c.so_lead, new Date(c.created_at).toLocaleDateString('vi-VN')]
+    [c.ten || '—', c.efc_code || '—', c.referrer_code, c.phone_masked || '—', TEN_BAC[c.tier] + ' (' + c.tier + ')',
+     c.so_lead, c.managed_by_efc_code || '—', new Date(c.created_at).toLocaleDateString('vi-VN')]
       .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
-    const tdNut = document.createElement('td');
+
+    const tdBac = document.createElement('td');
     const chon = document.createElement('select'); chon.style.minHeight = '36px';
     for (let i = 0; i <= 3; i++) { const o = document.createElement('option'); o.value = i; o.textContent = i + ' - ' + TEN_BAC[i]; if (i === c.tier) o.selected = true; chon.appendChild(o); }
-    const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'Lưu'; btn.style.marginLeft = '8px';
-    btn.onclick = async () => {
+    const btnBac = document.createElement('button'); btnBac.className = 'lk'; btnBac.textContent = 'Lưu'; btnBac.style.marginLeft = '8px';
+    btnBac.onclick = async () => {
       await fetch(API_GOC + '/api/v1/admin/ctv/' + encodeURIComponent(c.referrer_code) + '/tier', { method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + k }, body: JSON.stringify({ tier: Number(chon.value) }) });
+        headers: dauAdminJson(), body: JSON.stringify({ tier: Number(chon.value) }) });
       taiDanhSachCtv();
     };
-    tdNut.append(chon, btn); tr.appendChild(tdNut); tb.appendChild(tr);
+    tdBac.append(chon, btnBac); tr.appendChild(tdBac);
+
+    const tdQl = document.createElement('td');
+    const oQl = document.createElement('input'); oQl.placeholder = 'EFC-xxxxxx hoặc để trống'; oQl.value = c.managed_by_efc_code || '';
+    oQl.style.minWidth = '140px'; oQl.style.minHeight = '36px';
+    const btnQl = document.createElement('button'); btnQl.className = 'lk'; btnQl.textContent = 'Lưu'; btnQl.style.marginLeft = '8px';
+    btnQl.onclick = async () => {
+      await fetch(API_GOC + '/api/v1/admin/ctv/' + encodeURIComponent(c.referrer_code) + '/manager', { method: 'POST',
+        headers: dauAdminJson(), body: JSON.stringify({ managed_by_efc_code: oQl.value.trim() || null }) });
+      taiDanhSachCtv();
+    };
+    tdQl.append(oQl, btnQl); tr.appendChild(tdQl);
+    tb.appendChild(tr);
   }
 }
 $('tai').addEventListener('click', taiDanhSachCtv);
+
+// ---------- Offer ----------
+async function taiDanhSachOffer() {
+  const k = $('khoa').value.trim(); if (!k) return;
+  const r = await fetch(API_GOC + '/api/v1/admin/offers', { headers: dauAdmin() });
+  if (!r.ok) return;
+  const d = await r.json(); if (!d.ok) return;
+  const tb = $('ds-offer'); tb.textContent = '';
+  for (const o of d.rows) {
+    const tr = document.createElement('tr');
+    [o.id, o.code + ' — ' + o.name, o.price_minor != null ? o.price_minor.toLocaleString('vi-VN') + ' ' + o.currency : 'Miễn phí', o.status]
+      .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+    const tdNut = document.createElement('td');
+    if (o.status === 'DRAFT') {
+      const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'Publish';
+      btn.onclick = async () => { await fetch(API_GOC + '/api/v1/admin/offers/' + encodeURIComponent(o.id) + '/publish', { method: 'POST', headers: dauAdmin() }); taiDanhSachOffer(); };
+      tdNut.appendChild(btn);
+    }
+    tr.appendChild(tdNut); tb.appendChild(tr);
+  }
+}
+$('form-them-offer').addEventListener('submit', async e => {
+  e.preventDefault();
+  const k = $('khoa').value.trim(); if (!k) return ($('offer-bao').innerHTML = '<span class="loi">Nhập khoá quản trị.</span>');
+  const code = $('offer-ma').value.trim(); const name = $('offer-ten').value.trim();
+  const gia = $('offer-gia').value.trim();
+  $('offer-nut-them').disabled = true; $('offer-bao').textContent = 'Đang tạo…';
+  const r = await fetch(API_GOC + '/api/v1/admin/offers', { method: 'POST', headers: dauAdminJson(),
+    body: JSON.stringify({ code, name, price_minor: gia ? Number(gia) : null }) });
+  const d = await r.json();
+  $('offer-nut-them').disabled = false;
+  if (!d.ok) { $('offer-bao').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + '</span>'; return; }
+  $('offer-bao').textContent = 'Đã tạo offer ' + d.id + ' (DRAFT) — bấm Publish để CTV/khách thấy được.';
+  $('offer-ma').value = ''; $('offer-ten').value = ''; $('offer-gia').value = '';
+  taiDanhSachOffer();
+});
+$('tai').addEventListener('click', taiDanhSachOffer);
+
+// ---------- Đơn hàng & hoa hồng ----------
+async function taiDanhSachOrder() {
+  const k = $('khoa').value.trim(); if (!k) return;
+  const r = await fetch(API_GOC + '/api/v1/admin/orders', { headers: dauAdmin() });
+  if (!r.ok) return;
+  const d = await r.json(); if (!d.ok) return;
+  const tb = $('ds-order'); tb.textContent = '';
+  for (const o of d.rows) {
+    const tr = document.createElement('tr');
+    [o.id, o.offer_id, o.lead_id || '—', (o.amount_minor || 0).toLocaleString('vi-VN') + ' ' + o.currency, o.status]
+      .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+    const tdNut = document.createElement('td');
+    if (o.status === 'PENDING_PAYMENT') {
+      const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'Đánh dấu đã thu tiền';
+      btn.onclick = async () => {
+        const ref = prompt('Mã tham chiếu thanh toán phía EFCare (tuỳ chọn):') || null;
+        await fetch(API_GOC + '/api/v1/admin/orders/' + encodeURIComponent(o.id) + '/mark-paid', { method: 'POST', headers: dauAdminJson(), body: JSON.stringify({ external_payment_ref: ref }) });
+        taiDanhSachOrder();
+      };
+      tdNut.appendChild(btn);
+    }
+    tr.appendChild(tdNut); tb.appendChild(tr);
+  }
+}
+$('form-them-order').addEventListener('submit', async e => {
+  e.preventDefault();
+  const k = $('khoa').value.trim(); if (!k) return ($('order-bao').innerHTML = '<span class="loi">Nhập khoá quản trị.</span>');
+  const offer_id = $('order-offer').value.trim(); const lead_id = $('order-lead').value.trim() || null;
+  const amount_minor = Number($('order-tien').value);
+  $('order-nut-them').disabled = true; $('order-bao').textContent = 'Đang tạo…';
+  const r = await fetch(API_GOC + '/api/v1/admin/orders', { method: 'POST', headers: dauAdminJson(),
+    body: JSON.stringify({ offer_id, lead_id, amount_minor }) });
+  const d = await r.json();
+  $('order-nut-them').disabled = false;
+  if (!d.ok) { $('order-bao').innerHTML = '<span class="loi">Lỗi: ' + (d.ma || r.status) + '</span>'; return; }
+  $('order-bao').textContent = 'Đã tạo đơn ' + d.id + '.';
+  $('order-offer').value = ''; $('order-lead').value = ''; $('order-tien').value = '';
+  taiDanhSachOrder();
+});
+$('tai').addEventListener('click', taiDanhSachOrder);
 </script>
 </body>
 </html>

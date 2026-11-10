@@ -67,7 +67,10 @@
   </section>
 
   <section class="the" id="khung-xong" hidden>
-    <p class="bao dat">Đã nhận thông tin. Cảm ơn bạn — sẽ có người liên hệ sớm.</p>
+    <p class="bao dat">Thông tin của bạn đã được tiếp nhận.</p>
+    <p class="phu">Cảm ơn bạn đã quan tâm. Thông tin đã được gửi tới <span id="xong-donvi">đội ngũ phụ trách</span>.</p>
+    <p class="phu" id="xong-han" hidden></p>
+    <p class="phu" id="xong-hotro" hidden></p>
   </section>
 </main>
 
@@ -111,10 +114,22 @@ const LOI = { SAI_DANH_TINH: 'Số điện thoại chưa đúng.', CHUA_DONG_Y: 
   CHUA_CAU_HINH: 'Hệ thống đang tạm dừng nhận thông tin. Vui lòng quay lại sau.',
   DANH_TINH_DA_THU_HOI: 'Số điện thoại này đã yêu cầu ngừng liên hệ trước đó.' };
 
+// Kaizen UX #3 (phản biện GPT 10/11): nêu rõ đơn vị/thời hạn/kênh hỗ trợ — CHỈ khi backend đã cấu hình thật
+// (next_step), không tự bịa lời hứa thời hạn liên hệ.
+function hienThiXong(nextStep) {
+  if (nextStep && nextStep.organization) $('xong-donvi').textContent = nextStep.organization;
+  if (nextStep && nextStep.expected_contact_text) { $('xong-han').textContent = nextStep.expected_contact_text; $('xong-han').hidden = false; }
+  if (nextStep && nextStep.support_url) { $('xong-hotro').innerHTML = 'Cần hỗ trợ hoặc muốn rút lại yêu cầu? <a href="' + nextStep.support_url + '">Liên hệ tại đây</a>.'; $('xong-hotro').hidden = false; }
+  $('khung-form').hidden = true; $('khung-xong').hidden = false;
+}
+
+// Kaizen UX #4: phân biệt rõ "đang chờ gửi trên máy" / "đang gửi lên máy chủ" / "máy chủ đã xác nhận" —
+// không báo "đã tiếp nhận" trước khi thật sự có xác nhận từ máy chủ.
 async function gui() {
   clearTimeout(henGio);
+  bao('Đang gửi lên máy chủ…');
   const kq = await ob.xa();
-  for (const x of kq.xong) if (x.data && x.data.ok) { $('khung-form').hidden = true; $('khung-xong').hidden = false; }
+  for (const x of kq.xong) if (x.data && x.data.ok) hienThiXong(x.data.next_step);
   if (kq.loi.length) {
     const ma = kq.loi[0].item.ma;
     bao(LOI[ma] || 'Không gửi được thông tin. Vui lòng kiểm tra lại và gửi lại.', 'loi');
@@ -122,7 +137,7 @@ async function gui() {
     $('nut').disabled = false;
   }
   if (kq.hen_luc) {
-    bao('Mạng đang chập chờn. Thông tin đã được giữ trên máy, sẽ tự gửi lại.', '');
+    bao('Thông tin đang chờ gửi trên thiết bị của bạn — mạng đang chập chờn, hệ thống sẽ tự gửi lại khi có mạng. Bạn có thể giữ trang này hoặc mở lại sau.', '');
     henGio = setTimeout(gui, Math.max(1000, kq.hen_luc - Date.now()));
   }
 }
@@ -132,7 +147,7 @@ $('form').addEventListener('submit', async e => {
   const phone = $('sdt').value.trim();
   if (!phone) return bao('Vui lòng nhập số điện thoại.', 'loi');
   if (!$('dong-y').checked) return bao(LOI.CHUA_DONG_Y, 'loi');
-  $('nut').disabled = true; bao('Đang gửi…');
+  $('nut').disabled = true; bao('Đã lưu trên máy, đang chuyển tiếp…');
   // Ghi vào máy TRƯỚC khi gửi: mất mạng giữa chừng cũng không mất, gửi lại không tạo lead trùng.
   await ob.them(API_GOC + '/api/v1/leads', {
     client_tx_id: crypto.randomUUID(), program_code: PROGRAM_CODE,
