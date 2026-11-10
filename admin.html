@@ -10,125 +10,212 @@
 <style>
   :root {
     --mau: #163963; --mau-toi: #0F2A4A; --vang: #C0A866; --vang-nhat: #F7F1CF;
-    --chu: #14243A; --phu: #5B6B80; --nen: #FBF9F3; --the-nen: #fff; --vien: #E7E0CB;
+    --chu: #14243A; --phu: #5B6B80; --nen: #F3EFE4; --the-nen: #fff; --vien: #E7E0CB;
     --loi: #A2452E; --loi-nen: #FCEDE8; --dat: #1E7B4F; --dat-nen: #E3F3EA;
+    --xanh-nhat: #EAF1FB;
   }
+  * { box-sizing: border-box; }
   body { margin: 0; font-family: 'Be Vietnam Pro', system-ui, sans-serif; color: var(--chu); background: var(--nen); line-height: 1.5; }
-  main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  main { max-width: 1200px; margin: 0 auto; padding: 20px 20px 60px; }
+
+  /* Thanh trên cùng — dính đầu trang */
+  .topbar { position: sticky; top: 0; z-index: 20; background: var(--mau); color: #fff;
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; box-shadow: 0 2px 10px rgba(22,57,99,.15); }
   .dau-app { display: flex; align-items: center; gap: 10px; }
-  .dau-app img { width: 32px; height: 32px; border-radius: 8px; }
-  h1 { font-size: 1.3rem; margin: 0; }
-  h2 { color: var(--mau); border-bottom: 2px solid var(--vang-nhat); padding-bottom: 6px; margin-top: 28px; }
-  .hang { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
-  input, select, button { font: inherit; min-height: 44px; padding: 6px 10px; border: 1px solid var(--vien); border-radius: 8px; }
-  button { background: var(--mau); color: #fff; border: 0; font-weight: 600; cursor: pointer; }
+  .dau-app img { width: 30px; height: 30px; border-radius: 8px; background: #fff; }
+  h1 { font-size: 1.15rem; margin: 0; font-weight: 700; color: #fff; }
+  .trang-thai-dn { font-size: .82rem; color: var(--vang-nhat); text-align: right; }
+  .trang-thai-dn b { color: #fff; }
+
+  h2 { color: var(--mau); font-size: 1.05rem; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+  h2 .icon-khoi { font-size: 1.1rem; }
+  .mo-ta-khoi { color: var(--phu); font-size: .85rem; margin: 0 0 14px; }
+
+  /* Khối thẻ — mỗi mục quản trị nằm trong 1 thẻ bo góc, có bóng nhẹ */
+  .khoi { background: var(--the-nen); border: 1px solid var(--vien); border-radius: 16px; padding: 20px;
+    margin-top: 20px; box-shadow: 0 1px 3px rgba(22,57,99,.05); }
+  .khoi:first-of-type { margin-top: 24px; }
+
+  .hang { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+  .form-luoi { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-top: 4px; }
+  .truong { display: flex; flex-direction: column; gap: 5px; }
+  .truong label { font-size: .78rem; color: var(--phu); font-weight: 600; }
+
+  input, select, button { font: inherit; min-height: 44px; padding: 8px 12px; border: 1px solid var(--vien); border-radius: 9px; }
+  input, select { background: var(--the-nen); color: var(--chu); }
+  input:focus, select:focus { outline: 2px solid var(--vang); outline-offset: 1px; border-color: var(--mau); }
+  button { background: var(--mau); color: #fff; border: 0; font-weight: 700; cursor: pointer; transition: background .15s; }
   button:hover { background: var(--mau-toi); }
-  table { width: 100%; border-collapse: collapse; background: var(--the-nen); font-size: .9rem; }
-  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--vien); white-space: nowrap; }
-  th { background: var(--vang-nhat); color: var(--mau-toi); font-weight: 700; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.phu { background: var(--xanh-nhat); color: var(--mau); }
+  button.phu:hover { background: #DCE8F7; }
+  button.vien { background: transparent; color: var(--mau); border: 1px solid var(--mau); font-weight: 600; }
+  button.vien:hover { background: var(--xanh-nhat); }
+
+  table { width: 100%; border-collapse: collapse; background: var(--the-nen); font-size: .88rem; }
+  th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--vien); white-space: nowrap; }
+  th { background: var(--xanh-nhat); color: var(--mau-toi); font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .02em; }
+  tbody tr:hover { background: var(--vang-nhat); }
+  .rong { text-align: center !important; color: var(--phu); padding: 26px 10px !important; font-style: italic; white-space: normal !important; }
+
   .loi { color: var(--loi); }
-  .lk { color: var(--mau); cursor: pointer; text-decoration: underline; background: none; border: 0; min-height: auto; padding: 0; font: inherit; }
-  .bang-cuon { overflow-x: auto; max-width: 100%; }   /* bảng rộng hơn màn hình 390px thì cuộn ngang, không tràn ra ngoài */
-  .thong-ke { display: flex; gap: 24px; flex-wrap: wrap; margin: 10px 0; }
-  .thong-ke table { min-width: 260px; }
+  .lk { color: var(--mau); cursor: pointer; text-decoration: underline; background: none; border: 0; min-height: auto; padding: 0; font: inherit; font-weight: 600; }
+  .bang-cuon { overflow-x: auto; max-width: 100%; border: 1px solid var(--vien); border-radius: 10px; }
+  .bang-cuon table { border-radius: 10px; overflow: hidden; }
+
+  .thong-ke { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 4px; }
+  .the-tk h3 { margin: 0 0 8px; font-size: .82rem; color: var(--phu); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+
   .anh-nho { height: 36px; width: 64px; object-fit: cover; border-radius: 4px; vertical-align: middle; }
+
+  /* Nhãn trạng thái màu */
+  .nhan { font-size: .72rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; display: inline-block;
+    background: var(--vang-nhat); color: #6B5A32; white-space: nowrap; }
+  .nhan.dat { background: var(--dat-nen); color: var(--dat); }
+  .nhan.loi { background: var(--loi-nen); color: var(--loi); }
+  .nhan.trung { background: var(--xanh-nhat); color: var(--mau); }
+
+  .khung-noi { border: 1px dashed var(--vien); border-radius: 12px; padding: 14px; background: var(--xanh-nhat); margin-top: 4px; }
 </style>
 </head>
 <body>
-<main>
+<header class="topbar">
   <div class="dau-app"><img src="icon-192.png" alt="EFCLoyalty"><h1>Quản trị · EFCLoyalty</h1></div>
-  <div class="hang">
-    <input type="password" id="khoa" placeholder="Khoá quản trị" autocomplete="off">
-    <button type="button" id="nut-dn-efid" class="lk" style="border:1px solid var(--vien); padding:6px 10px; border-radius:8px;">hoặc đăng nhập bằng EF-ID →</button>
-    <input type="text" id="actor" placeholder="Tên của bạn (ghi vào nhật ký)" autocomplete="off" style="min-width:200px">
-    <select id="chuong-trinh"><option value="">Mọi chương trình</option><option>EFCARE</option></select>
-    <select id="loc"><option value="">Mọi trạng thái</option><option>NEW</option><option>CONTACTABLE</option><option>QUALIFIED</option><option>NURTURING</option><option>CONVERTED</option><option>DISQUALIFIED</option><option>WITHDRAWN</option></select>
-    <button id="tai">Tải</button><button id="them" disabled>Tải thêm</button><button id="tsv" disabled>Sao chép TSV</button>
-  </div>
-  <p id="bao" role="status"></p>
-  <div class="hang" id="khung-dn-efid" hidden>
-    <input type="text" id="efid-dinh-danh" placeholder="SĐT hoặc EFC-xxxxxx" style="min-width:160px">
-    <input type="password" id="efid-pin" placeholder="PIN (6 số)" maxlength="6" style="min-width:100px">
-    <button type="button" id="efid-xac-nhan">Đăng nhập</button>
-    <span id="efid-bao" class="loi"></span>
-  </div>
+  <div class="trang-thai-dn" id="trang-thai-dn">Chưa đăng nhập</div>
+</header>
+<main>
 
-  <h2>Dashboard nguồn lead</h2>
-  <div class="thong-ke">
-    <div>
-      <p class="phu" style="margin:0 0 4px">Theo nguồn (attribution_source)</p>
-      <div class="bang-cuon"><table id="bang-theo-nguon"><thead><tr><th>Nguồn</th><th>Số lead</th><th>Đã chuyển đổi</th></tr></thead><tbody></tbody></table></div>
+  <section class="khoi">
+    <h2><span class="icon-khoi">🔑</span> Đăng nhập quản trị</h2>
+    <p class="mo-ta-khoi">Dùng khoá quản trị chung, hoặc đăng nhập bằng chính tài khoản EF-ID nếu đã được cấp quyền.</p>
+    <div class="form-luoi">
+      <div class="truong"><label for="khoa">Khoá quản trị</label><input type="password" id="khoa" placeholder="Khoá quản trị" autocomplete="off" style="min-width:200px"></div>
+      <div class="truong"><label for="actor">Tên của bạn (ghi vào nhật ký)</label><input type="text" id="actor" placeholder="vd: Linh Mula" autocomplete="off" style="min-width:200px"></div>
+      <button type="button" id="nut-dn-efid" class="vien">hoặc đăng nhập bằng EF-ID →</button>
     </div>
-    <div>
-      <p class="phu" style="margin:0 0 4px">Theo người giới thiệu (top 50)</p>
-      <div class="bang-cuon"><table id="bang-theo-gioi-thieu"><thead><tr><th>Mã CTV</th><th>Số lead</th><th>Đã chuyển đổi</th></tr></thead><tbody></tbody></table></div>
+    <div class="form-luoi khung-noi" id="khung-dn-efid" hidden>
+      <div class="truong"><label for="efid-dinh-danh">SĐT hoặc mã EF-ID</label><input type="text" id="efid-dinh-danh" placeholder="09xx xxx xxx / EFC-xxxxxx" style="min-width:180px"></div>
+      <div class="truong"><label for="efid-pin">Mã PIN (6 số)</label><input type="password" id="efid-pin" placeholder="••••••" maxlength="6" style="min-width:100px"></div>
+      <button type="button" id="efid-xac-nhan">Đăng nhập</button>
+      <span id="efid-bao" class="loi"></span>
     </div>
-  </div>
+    <p id="bao" role="status" style="margin:12px 0 0; font-weight:600;"></p>
+  </section>
 
-  <h2>Danh sách Lead</h2>
-  <div class="bang-cuon">
-  <table><thead><tr><th>Ngày</th><th>Lead</th><th>Chương trình</th><th>Trạng thái</th><th>SĐT (che)</th><th>Nguồn</th><th>Người giới thiệu</th><th>Chiến dịch</th><th>Hook</th><th></th></tr></thead><tbody id="ds"></tbody></table>
-  </div>
+  <section class="khoi">
+    <h2><span class="icon-khoi">📊</span> Dashboard nguồn lead</h2>
+    <p class="mo-ta-khoi">Lọc theo chương trình/trạng thái rồi bấm Tải để nạp lại toàn bộ bên dưới.</p>
+    <div class="form-luoi">
+      <div class="truong"><label for="chuong-trinh">Chương trình</label><select id="chuong-trinh"><option value="">Mọi chương trình</option><option>EFCARE</option></select></div>
+      <div class="truong"><label for="loc">Trạng thái Lead</label><select id="loc"><option value="">Mọi trạng thái</option><option>NEW</option><option>CONTACTABLE</option><option>QUALIFIED</option><option>NURTURING</option><option>CONVERTED</option><option>DISQUALIFIED</option><option>WITHDRAWN</option></select></div>
+      <button id="tai">Tải</button><button id="them" disabled class="phu">Tải thêm</button><button id="tsv" disabled class="phu">Sao chép TSV</button>
+    </div>
+    <div class="thong-ke">
+      <div class="the-tk">
+        <h3>Theo nguồn (attribution_source)</h3>
+        <div class="bang-cuon"><table id="bang-theo-nguon"><thead><tr><th>Nguồn</th><th>Số lead</th><th>Đã chuyển đổi</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="the-tk">
+        <h3>Theo người giới thiệu (top 50)</h3>
+        <div class="bang-cuon"><table id="bang-theo-gioi-thieu"><thead><tr><th>Mã CTV</th><th>Số lead</th><th>Đã chuyển đổi</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
 
-  <h2>Xem số điện thoại đầy đủ (bắt buộc lý do, luôn ghi lại nhật ký)</h2>
-  <div class="hang">
-    <input type="text" id="pii-lead" placeholder="Mã Lead (led_…)">
-    <input type="text" id="pii-ly-do" placeholder="Lý do xem (bắt buộc)" style="min-width:260px">
-    <button id="pii-xem">Xem</button>
-  </div>
-  <p id="pii-ket-qua"></p>
+  <section class="khoi">
+    <h2><span class="icon-khoi">📋</span> Danh sách Lead</h2>
+    <div class="bang-cuon">
+    <table><thead><tr><th>Ngày</th><th>Lead</th><th>Chương trình</th><th>Trạng thái</th><th>SĐT (che)</th><th>Nguồn</th><th>Người giới thiệu</th><th>Chiến dịch</th><th>Hook</th><th></th></tr></thead><tbody id="ds"></tbody></table>
+    </div>
+  </section>
 
-  <h2>Quản lý Quà (hiện trên trang CTV)</h2>
-  <p class="phu">Dán link món quà (ảnh, video, trang bất kỳ) — hệ thống tự dò ảnh/tiêu đề làm banner cho trang CTV.</p>
-  <form class="hang" id="form-them-qua" novalidate>
-    <input type="text" id="qua-tieu-de" placeholder="Tên quà (vd: Video hạ đường huyết)" style="min-width:220px" required>
-    <input type="url" id="qua-link" placeholder="https://… link món quà" style="min-width:320px" required>
-    <button type="submit" id="qua-nut-them">Thêm quà</button>
-  </form>
-  <p id="qua-bao" role="status"></p>
-  <div class="bang-cuon">
-  <table><thead><tr><th>Banner</th><th>Tên</th><th>Link</th><th>Trạng thái</th><th>Ngày</th><th></th></tr></thead><tbody id="ds-qua"></tbody></table>
-  </div>
+  <section class="khoi">
+    <h2><span class="icon-khoi">🔒</span> Xem số điện thoại đầy đủ</h2>
+    <p class="mo-ta-khoi">Bắt buộc lý do, luôn ghi lại nhật ký truy cập.</p>
+    <div class="form-luoi">
+      <div class="truong"><label for="pii-lead">Mã Lead</label><input type="text" id="pii-lead" placeholder="led_…" style="min-width:200px"></div>
+      <div class="truong"><label for="pii-ly-do">Lý do xem</label><input type="text" id="pii-ly-do" placeholder="Bắt buộc" style="min-width:260px"></div>
+      <button id="pii-xem">Xem</button>
+    </div>
+    <p id="pii-ket-qua" style="margin-top:10px;"></p>
+  </section>
 
-  <h2>Quản lý CTV (lộ trình 4 bậc, định danh EF-ID)</h2>
-  <p class="phu">Nâng bậc sau khi CTV hoàn thành đào tạo ngoài nền tảng này — không tự động. "Quản lý" là người hưởng 10% thưởng quản lý nội bộ — gán tay theo hợp đồng, không suy từ người giới thiệu.</p>
-  <div class="bang-cuon">
-  <table><thead><tr><th>Tên</th><th>Mã EF-ID</th><th>Mã giới thiệu</th><th>SĐT (che)</th><th>Bậc</th><th>Số khách</th><th>Người quản lý</th><th>Tham gia</th><th>Nâng/hạ bậc</th><th>Gán quản lý</th></tr></thead><tbody id="ds-ctv"></tbody></table>
-  </div>
+  <section class="khoi">
+    <h2><span class="icon-khoi">🎁</span> Quản lý Quà (hiện trên trang CTV)</h2>
+    <p class="mo-ta-khoi">Dán link món quà hoặc link nhóm Zalo — hệ thống tự dò ảnh/tiêu đề làm banner cho trang CTV.</p>
+    <form class="form-luoi" id="form-them-qua" novalidate>
+      <div class="truong"><label for="qua-tieu-de">Tên quà</label><input type="text" id="qua-tieu-de" placeholder="vd: Video hạ đường huyết / Nhóm Zalo" style="min-width:240px" required></div>
+      <div class="truong"><label for="qua-link">Link</label><input type="url" id="qua-link" placeholder="https://…" style="min-width:320px" required></div>
+      <button type="submit" id="qua-nut-them">Thêm quà</button>
+    </form>
+    <p id="qua-bao" role="status" style="margin-top:10px;"></p>
+    <div class="bang-cuon" style="margin-top:10px;">
+    <table><thead><tr><th>Banner</th><th>Tên</th><th>Link</th><th>Trạng thái</th><th>Ngày</th><th></th></tr></thead><tbody id="ds-qua"></tbody></table>
+    </div>
+  </section>
 
-  <h2>Quản lý Offer (giá theo từng chiến dịch)</h2>
-  <form class="hang" id="form-them-offer" novalidate>
-    <input type="text" id="offer-ma" placeholder="Mã (vd: KHOA-A)" required>
-    <input type="text" id="offer-ten" placeholder="Tên offer" style="min-width:200px" required>
-    <input type="number" id="offer-gia" placeholder="Giá (đồng, để trống = miễn phí)">
-    <button type="submit" id="offer-nut-them">Tạo offer (DRAFT)</button>
-  </form>
-  <p id="offer-bao" role="status"></p>
-  <div class="bang-cuon">
-  <table><thead><tr><th>Mã</th><th>Tên</th><th>Giá</th><th>Trạng thái</th><th></th></tr></thead><tbody id="ds-offer"></tbody></table>
-  </div>
+  <section class="khoi">
+    <h2><span class="icon-khoi">🪜</span> Quản lý CTV (lộ trình 4 bậc, định danh EF-ID)</h2>
+    <p class="mo-ta-khoi">Nâng bậc sau khi CTV hoàn thành đào tạo ngoài nền tảng này — không tự động. "Quản lý" là người hưởng 10% thưởng quản lý nội bộ — gán tay theo hợp đồng, không suy từ người giới thiệu.</p>
+    <div class="bang-cuon">
+    <table><thead><tr><th>Tên</th><th>Mã EF-ID</th><th>Mã giới thiệu</th><th>SĐT (che)</th><th>Bậc</th><th>Số khách</th><th>Người quản lý</th><th>Tham gia</th><th>Nâng/hạ bậc</th><th>Gán quản lý</th></tr></thead><tbody id="ds-ctv"></tbody></table>
+    </div>
+  </section>
 
-  <h2>Đơn hàng &amp; hoa hồng</h2>
-  <p class="phu">Đợt này: xác nhận thu tiền bằng tay (chờ webhook thật từ EFCare). Đánh dấu "đã thu tiền" sẽ tự tính hoa hồng 20%/10% nếu đơn gắn đúng mã Lead có người giới thiệu.</p>
-  <form class="hang" id="form-them-order" novalidate>
-    <input type="text" id="order-offer" placeholder="Mã offer (off_…)" style="min-width:200px" required>
-    <input type="text" id="order-lead" placeholder="Mã Lead (led_…, để trống nếu không có)">
-    <input type="number" id="order-tien" placeholder="Số tiền (đồng)" required>
-    <button type="submit" id="order-nut-them">Tạo đơn</button>
-  </form>
-  <p id="order-bao" role="status"></p>
-  <div class="bang-cuon">
-  <table><thead><tr><th>Mã đơn</th><th>Offer</th><th>Lead</th><th>Số tiền</th><th>Trạng thái</th><th></th></tr></thead><tbody id="ds-order"></tbody></table>
-  </div>
+  <section class="khoi">
+    <h2><span class="icon-khoi">🛍️</span> Quản lý Offer (giá theo từng chiến dịch)</h2>
+    <form class="form-luoi" id="form-them-offer" novalidate>
+      <div class="truong"><label for="offer-ma">Mã offer</label><input type="text" id="offer-ma" placeholder="vd: KHOA-A" required></div>
+      <div class="truong"><label for="offer-ten">Tên offer</label><input type="text" id="offer-ten" placeholder="Tên hiển thị" style="min-width:220px" required></div>
+      <div class="truong"><label for="offer-gia">Giá (đồng)</label><input type="number" id="offer-gia" placeholder="Để trống = miễn phí"></div>
+      <button type="submit" id="offer-nut-them">Tạo offer (DRAFT)</button>
+    </form>
+    <p id="offer-bao" role="status" style="margin-top:10px;"></p>
+    <div class="bang-cuon" style="margin-top:10px;">
+    <table><thead><tr><th>Mã</th><th>Tên</th><th>Giá</th><th>Trạng thái</th><th></th></tr></thead><tbody id="ds-offer"></tbody></table>
+    </div>
+  </section>
+
+  <section class="khoi">
+    <h2><span class="icon-khoi">💳</span> Đơn hàng &amp; hoa hồng</h2>
+    <p class="mo-ta-khoi">Đợt này: xác nhận thu tiền bằng tay (chờ webhook thật từ EFCare). Đánh dấu "đã thu tiền" sẽ tự tính hoa hồng 20%/10% nếu đơn gắn đúng mã Lead có người giới thiệu.</p>
+    <form class="form-luoi" id="form-them-order" novalidate>
+      <div class="truong"><label for="order-offer">Mã offer</label><input type="text" id="order-offer" placeholder="off_…" style="min-width:200px" required></div>
+      <div class="truong"><label for="order-lead">Mã Lead (tuỳ chọn)</label><input type="text" id="order-lead" placeholder="led_…, để trống nếu không có"></div>
+      <div class="truong"><label for="order-tien">Số tiền (đồng)</label><input type="number" id="order-tien" placeholder="vd: 2000000" required></div>
+      <button type="submit" id="order-nut-them">Tạo đơn</button>
+    </form>
+    <p id="order-bao" role="status" style="margin-top:10px;"></p>
+    <div class="bang-cuon" style="margin-top:10px;">
+    <table><thead><tr><th>Mã đơn</th><th>Offer</th><th>Lead</th><th>Số tiền</th><th>Trạng thái</th><th></th></tr></thead><tbody id="ds-order"></tbody></table>
+    </div>
+  </section>
 
 </main>
 <script>
 const API_GOC = 'https://ctv-platform-lead-identity.efcare.workers.dev';
 const $ = id => document.getElementById(id);
 let rows = [], next = null;
+// Tô màu nhãn trạng thái (chỉ đổi cách hiển thị ô đã có, không đổi dữ liệu) + dòng "chưa có dữ liệu".
+const LOAI_DAT = ['CONVERTED', 'PUBLISHED', 'PAID', 'ACTIVE'];
+const LOAI_LOI = ['DISQUALIFIED', 'WITHDRAWN', 'ARCHIVED', 'CANCELLED', 'REFUNDED', 'SUSPENDED'];
+function nhanTrangThai(t) {
+  const loai = LOAI_DAT.includes(t) ? 'dat' : LOAI_LOI.includes(t) ? 'loi' : '';
+  return '<span class="nhan ' + loai + '">' + t + '</span>';
+}
+function dongRong(tb, soCot, chu) {
+  const tr = document.createElement('tr');
+  const td = document.createElement('td'); td.className = 'rong'; td.colSpan = soCot; td.textContent = chu;
+  tr.appendChild(td); tb.appendChild(tr);
+}
 $('khoa').value = sessionStorage.getItem('qt') || '';      // chỉ giữ trong phiên trình duyệt, đóng tab là mất
 $('actor').value = sessionStorage.getItem('qt-actor') || '';
-$('actor').addEventListener('change', () => sessionStorage.setItem('qt-actor', $('actor').value.trim()));
+function capNhatTrangThaiDangNhap() {
+  const ten = $('actor').value.trim();
+  $('trang-thai-dn').innerHTML = ten ? 'Đang vào bằng: <b>' + ten + '</b>' : 'Chưa đăng nhập';
+}
+$('actor').addEventListener('change', () => { sessionStorage.setItem('qt-actor', $('actor').value.trim()); capNhatTrangThaiDangNhap(); });
+capNhatTrangThaiDangNhap();
 function dauAdmin() {
   return { Authorization: 'Bearer ' + $('khoa').value.trim(), 'X-Admin-Actor': $('actor').value.trim() || 'khong_ro' };
 }
@@ -150,6 +237,7 @@ $('efid-xac-nhan').addEventListener('click', async () => {
   $('khoa').value = d.session_token;
   $('actor').value = d.ten || d.efc_code || 'khong_ro';
   sessionStorage.setItem('qt', d.session_token); sessionStorage.setItem('qt-actor', $('actor').value);
+  capNhatTrangThaiDangNhap();
   $('efid-bao').textContent = ''; $('khung-dn-efid').hidden = true;
   $('efid-dinh-danh').value = ''; $('efid-pin').value = '';
   $('bao').textContent = 'Đã đăng nhập bằng EF-ID: ' + (d.ten || d.efc_code) + '. Bấm Tải để xem dữ liệu.';
@@ -173,12 +261,14 @@ async function tai(tiep) {
     [new Date(x.created_at).toLocaleString('vi-VN'), x.id, x.program_code, x.status, x.identity_masked, x.attribution_source,
       x.referrer_code || '', x.campaign_id || '', x.hook_id || '']
       .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });   // textContent: chống chèn mã
+    tr.children[3].innerHTML = nhanTrangThai(x.status);
     const tdXem = document.createElement('td');
     const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'xem PII →';
     btn.onclick = () => { $('pii-lead').value = x.id; };
     tdXem.appendChild(btn); tr.appendChild(tdXem);
     $('ds').appendChild(tr);
   }
+  if (!tiep && !d.rows.length) dongRong($('ds'), 10, 'Chưa có lead nào.');
   next = d.next_cursor; $('them').disabled = !next; $('tsv').disabled = rows.length === 0;
   $('bao').textContent = rows.length + ' lead' + (next ? ' (còn nữa)' : '');
 }
@@ -233,6 +323,7 @@ async function taiDanhSachQua() {
     tr.appendChild(tdAnh);
     [h.title, h.resource_url, h.status, new Date(h.created_at).toLocaleString('vi-VN')]
       .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+    tr.children[3].innerHTML = nhanTrangThai(h.status);
     const tdNut = document.createElement('td');
     if (h.status === 'ACTIVE') {
       const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'lưu kho';
@@ -244,6 +335,7 @@ async function taiDanhSachQua() {
     }
     tr.appendChild(tdNut); tb.appendChild(tr);
   }
+  if (!d.rows.length) dongRong(tb, 6, 'Chưa có quà nào — thêm quà đầu tiên ở form phía trên.');
 }
 $('form-them-qua').addEventListener('submit', async e => {
   e.preventDefault();
@@ -297,6 +389,7 @@ async function taiDanhSachCtv() {
     tdQl.append(oQl, btnQl); tr.appendChild(tdQl);
     tb.appendChild(tr);
   }
+  if (!d.rows.length) dongRong(tb, 10, 'Chưa có CTV nào đăng ký.');
 }
 $('tai').addEventListener('click', taiDanhSachCtv);
 
@@ -311,6 +404,7 @@ async function taiDanhSachOffer() {
     const tr = document.createElement('tr');
     [o.id, o.code + ' — ' + o.name, o.price_minor != null ? o.price_minor.toLocaleString('vi-VN') + ' ' + o.currency : 'Miễn phí', o.status]
       .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+    tr.children[3].innerHTML = nhanTrangThai(o.status);
     const tdNut = document.createElement('td');
     if (o.status === 'DRAFT') {
       const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'Publish';
@@ -319,6 +413,7 @@ async function taiDanhSachOffer() {
     }
     tr.appendChild(tdNut); tb.appendChild(tr);
   }
+  if (!d.rows.length) dongRong(tb, 5, 'Chưa có offer nào — tạo offer đầu tiên ở form phía trên.');
 }
 $('form-them-offer').addEventListener('submit', async e => {
   e.preventDefault();
@@ -348,6 +443,7 @@ async function taiDanhSachOrder() {
     const tr = document.createElement('tr');
     [o.id, o.offer_id, o.lead_id || '—', (o.amount_minor || 0).toLocaleString('vi-VN') + ' ' + o.currency, o.status]
       .forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+    tr.children[4].innerHTML = nhanTrangThai(o.status);
     const tdNut = document.createElement('td');
     if (o.status === 'PENDING_PAYMENT') {
       const btn = document.createElement('button'); btn.className = 'lk'; btn.textContent = 'Đánh dấu đã thu tiền';
@@ -360,6 +456,7 @@ async function taiDanhSachOrder() {
     }
     tr.appendChild(tdNut); tb.appendChild(tr);
   }
+  if (!d.rows.length) dongRong(tb, 6, 'Chưa có đơn hàng nào.');
 }
 $('form-them-order').addEventListener('submit', async e => {
   e.preventDefault();
